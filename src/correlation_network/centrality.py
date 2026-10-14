@@ -72,7 +72,10 @@ class CentralityAnalyzer:
     def eigenvector(self) -> pd.Series:
         """Eigenvector centrality.
 
-        Falls back to NumPy solver if the power iteration does not converge.
+        Computed on absolute weights: with signed weights the adjacency matrix
+        loses the Perron-Frobenius guarantee of a non-negative leading
+        eigenvector, and nodes can receive negative scores. Falls back to the
+        NumPy solver if the power iteration does not converge.
 
         Returns
         -------
@@ -80,9 +83,9 @@ class CentralityAnalyzer:
             Eigenvector centrality for each node, sorted descending.
         """
         try:
-            values = nx.eigenvector_centrality(self.graph, weight="weight")
+            values = nx.eigenvector_centrality(self._abs_graph, weight="weight")
         except nx.PowerIterationFailedConvergence:
-            values = nx.eigenvector_centrality_numpy(self.graph, weight="weight")
+            values = nx.eigenvector_centrality_numpy(self._abs_graph, weight="weight")
         return pd.Series(values, name="eigenvector").sort_values(ascending=False)
 
     def closeness(self) -> pd.Series:

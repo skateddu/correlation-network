@@ -1,6 +1,9 @@
 """Input validation utilities."""
 
-from correlation_network.exceptions import NotFittedError
+import numpy as np
+import pandas as pd
+
+from correlation_network.exceptions import NoCompleteObservationsError, NotFittedError
 
 NOT_FITTED_MESSAGE = (
     "The instance is not fitted yet. "
@@ -34,3 +37,56 @@ def check_is_fitted(
     object_attrs = set(vars(estimator))
     if not attributes.intersection(object_attrs):
         raise NotFittedError(message)
+
+
+def complete_pair(x: pd.Series, y: pd.Series) -> tuple[pd.Series, pd.Series]:
+    """Restrict two series to the rows where both values are present.
+
+    Parameters
+    ----------
+    x : pd.Series
+        First column of the pair.
+    y : pd.Series
+        Second column of the pair, aligned with ``x``.
+
+    Returns
+    -------
+    tuple[pd.Series, pd.Series]
+        Both series, filtered to their pairwise-complete rows.
+
+    Raises
+    ------
+    NoCompleteObservationsError
+        If the two series share no rows where both values are present.
+    """
+    valid = x.notna() & y.notna()
+    if not valid.any():
+        raise NoCompleteObservationsError(columns=(str(x.name), str(y.name)))
+    return x[valid], y[valid]
+
+
+def check_pairwise_overlap(dataframe: pd.DataFrame) -> None:
+    """Ensure every column pair shares at least one complete row.
+
+    Matrix-level counterpart of :func:`complete_pair`, for strategies that
+    delegate the pairwise computation to pandas, which reports such pairs as
+    ``NaN`` rather than raising.
+
+    Parameters
+    ----------
+    dataframe : pd.DataFrame
+        Columns to check.
+
+    Raises
+    ------
+    NoCompleteObservationsError
+        For the first column pair with no rows where both values are present.
+    """
+    present = dataframe.notna().to_numpy(dtype=np.int64)
+    overlap = present.T @ present
+    rows, cols = np.nonzero(np.triu(overlap == 0, k=1))
+    if rows.size:
+        names = dataframe.columns
+        raise NoCompleteObservationsError(
+            columns=(str(names[rows[0]]), str(names[cols[0]]))
+        )

@@ -8,7 +8,10 @@ from correlation_network.association._universal import (
     MutualInformationStrategy,
     PhiKStrategy,
 )
-from correlation_network.exceptions import InsufficientColumnsError
+from correlation_network.exceptions import (
+    InsufficientColumnsError,
+    NoCompleteObservationsError,
+)
 
 
 class TestMutualInformationStrategy:
@@ -80,8 +83,36 @@ class TestPhiKStrategy:
         with pytest.raises(ImportError, match="correlation-network\\[phik\\]"):
             PhiKStrategy().compute(pd.DataFrame({"a": [1, 2], "b": [3, 4]}))
 
+    def test_no_overlapping_rows_raises(self):
+        pytest.importorskip("phik")
+        df = pd.DataFrame(
+            {
+                "p": [1.0, 2.0, 3.0, np.nan, np.nan, np.nan],
+                "q": [np.nan, np.nan, np.nan, 1.0, 2.0, 3.0],
+                "r": [1.0, 3.0, 2.0, 5.0, 4.0, 6.0],
+            }
+        )
+        with pytest.raises(NoCompleteObservationsError) as excinfo:
+            PhiKStrategy().compute(df)
+        assert set(excinfo.value.columns) == {"p", "q"}
+
     def test_computes_matrix_when_available(self, mixed_dataframe: pd.DataFrame):
         pytest.importorskip("phik")
         result = PhiKStrategy().compute(mixed_dataframe)
         assert set(result.columns) == set(mixed_dataframe.columns)
         assert (result.values >= -1e-10).all()
+
+
+class TestMutualInformationMissingValues:
+    def test_no_overlapping_rows_raises(self):
+        df = pd.DataFrame(
+            {
+                "p": ["a", "b", "a", None, None, None],
+                "q": [None, None, None, "a", "b", "b"],
+                "r": list("ababab"),
+            }
+        )
+        # an empty contingency table would otherwise report a fake 0.0
+        with pytest.raises(NoCompleteObservationsError) as excinfo:
+            MutualInformationStrategy().compute(df)
+        assert set(excinfo.value.columns) == {"p", "q"}

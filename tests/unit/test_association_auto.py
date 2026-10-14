@@ -1,9 +1,11 @@
 """Tests for the auto-detection association strategy."""
 
+import numpy as np
 import pandas as pd
 import pytest
 
 from correlation_network.association._auto import AutoAssociationStrategy
+from correlation_network.exceptions import NoCompleteObservationsError
 
 
 class TestAutoAssociationStrategy:
@@ -42,3 +44,16 @@ class TestAutoAssociationStrategy:
         # Auto mode uses abs values for numeric, so all should be [0, 1]
         assert (result >= -0.01).all().all()
         assert (result <= 1.01).all().all()
+
+
+class TestAutoMissingValues:
+    def test_numeric_pair_without_overlap_raises(self):
+        df = pd.DataFrame(
+            {
+                "p": [1.0, 2.0, 3.0, np.nan, np.nan, np.nan],
+                "q": [np.nan, np.nan, np.nan, 1.0, 2.0, 3.0],
+                "cat": list("ababab"),
+            }
+        )
+        with pytest.raises(NoCompleteObservationsError):
+            AutoAssociationStrategy().compute(df)

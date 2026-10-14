@@ -6,6 +6,7 @@ matplotlib.use("Agg")
 
 import matplotlib.pyplot as plt
 import networkx as nx
+import numpy as np
 import pytest
 from matplotlib.figure import Figure
 
@@ -121,6 +122,36 @@ class TestTitleAndSave:
             str(target), dpi=50, title="Forwarded", community_colors=True
         )
         assert target.exists()
+
+
+class TestLayoutWeighting:
+    @pytest.fixture()
+    def strong_and_weak_graph(self) -> nx.Graph:
+        """Path whose ends are joined by a strong and a weak association."""
+        graph = nx.Graph()
+        graph.add_edge("s1", "s2", weight=0.95)
+        graph.add_edge("s2", "w1", weight=0.6)
+        graph.add_edge("w1", "w2", weight=0.35)
+        return graph
+
+    def test_kamada_kawai_draws_strong_edges_shorter_than_weak_ones(
+        self, strong_and_weak_graph: nx.Graph
+    ):
+        # Kamada-Kawai reads weights as target distances, so strength must be
+        # converted first or strong associations become the longest edges
+        pos = NetworkVisualizer(strong_and_weak_graph)._layout_positions(
+            layout="kamada_kawai"
+        )
+        strong = np.linalg.norm(pos["s1"] - pos["s2"])
+        weak = np.linalg.norm(pos["w1"] - pos["w2"])
+        assert strong < weak
+
+    @pytest.mark.parametrize("layout", ["kamada_kawai", "spring", "spectral"])
+    def test_negative_weights_produce_finite_positions(
+        self, sample_graph: nx.Graph, layout: str
+    ):
+        pos = NetworkVisualizer(sample_graph)._layout_positions(layout=layout)
+        assert all(np.isfinite(p).all() for p in pos.values())
 
 
 class TestNodeSizes:

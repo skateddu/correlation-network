@@ -3,6 +3,7 @@
 import pandas as pd
 
 from correlation_network._types import CorrelationMethod
+from correlation_network._validation import check_pairwise_overlap
 from correlation_network.exceptions import InsufficientColumnsError
 
 
@@ -28,6 +29,8 @@ class _CorrelationStrategy:
         ------
         InsufficientColumnsError
             If fewer than 2 numeric columns are present.
+        NoCompleteObservationsError
+            If a pair has no rows where both columns are present.
         """
         numeric_cols = dataframe.select_dtypes(include="number").columns.tolist()
         if len(numeric_cols) < 2:
@@ -36,6 +39,7 @@ class _CorrelationStrategy:
                 required="at least 2 numeric columns",
                 found=numeric_cols,
             )
+        check_pairwise_overlap(dataframe[numeric_cols])
         return dataframe.corr(method=self._method, numeric_only=True)
 
 

@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 from scipy.stats import entropy
 
+from correlation_network._validation import check_pairwise_overlap, complete_pair
 from correlation_network.exceptions import InsufficientColumnsError
 
 
@@ -32,6 +33,8 @@ class PhiKStrategy:
         ------
         ImportError
             If the ``phik`` package is not installed.
+        NoCompleteObservationsError
+            If a pair has no rows where both columns are present.
         """
         try:
             import phik  # noqa: F401
@@ -41,6 +44,8 @@ class PhiKStrategy:
                 "Install it with: pip install 'correlation-network[phik]'"
             ) from None
 
+        # phik reports pairs without overlapping rows as NaN instead of raising
+        check_pairwise_overlap(dataframe)
         return dataframe.phik_matrix()
 
 
@@ -70,6 +75,8 @@ class MutualInformationStrategy:
         ------
         InsufficientColumnsError
             If fewer than 2 columns are present.
+        NoCompleteObservationsError
+            If a pair has no rows where both columns are present.
         """
         if len(dataframe.columns) < 2:
             raise InsufficientColumnsError(
@@ -104,9 +111,7 @@ class MutualInformationStrategy:
     @staticmethod
     def _normalized_mi(x: pd.Series, y: pd.Series) -> float:
         """Compute normalized mutual information between two discrete series."""
-        valid = x.notna() & y.notna()
-        x_clean = x[valid]
-        y_clean = y[valid]
+        x_clean, y_clean = complete_pair(x, y)
 
         contingency = pd.crosstab(index=x_clean, columns=y_clean)
         joint_prob = contingency.values / contingency.values.sum()

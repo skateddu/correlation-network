@@ -317,6 +317,20 @@ class TestPolarsSupport:
             net = CorrelationNetwork(threshold=0.3)
             net.fit({"not": "a dataframe"})
 
+    def test_from_matrix_accepts_polars(self):
+        # Polars has no row index: rows are labelled by the column order
+        matrix = pl.DataFrame(
+            {"a": [1.0, 0.8, 0.2], "b": [0.8, 1.0, 0.4], "c": [0.2, 0.4, 1.0]}
+        )
+        net = CorrelationNetwork.from_matrix(matrix, threshold=0.5)
+        assert list(net.adjacency_matrix_.index) == ["a", "b", "c"]
+        assert set(net.transform().edges()) == {("a", "b")}
+
+    def test_from_matrix_polars_non_square_raises(self):
+        matrix = pl.DataFrame({"a": [1.0, 0.5, 0.1], "b": [0.5, 1.0, 0.2]})
+        with pytest.raises(ValueError, match="square"):
+            CorrelationNetwork.from_matrix(matrix)
+
 
 class TestRepr:
     def test_repr(self):

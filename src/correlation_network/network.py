@@ -205,9 +205,14 @@ class CorrelationNetwork:
             If the matrix is not square, labels don't match,
             or it is not symmetric.
         """
+        is_pandas = isinstance(matrix, pd.DataFrame)
         matrix = _to_pandas(matrix)
         if matrix.shape[0] != matrix.shape[1]:
             raise ValueError(f"Matrix must be square, got shape {matrix.shape}")
+        if not is_pandas:
+            # Polars frames carry no row index, so rows can only be labelled
+            # by position; the converted RangeIndex would never match.
+            matrix.index = matrix.columns
         if not matrix.index.equals(matrix.columns):
             raise ValueError("Row index must match column index")
         if not np.allclose(matrix.values, matrix.values.T, atol=1e-8):
