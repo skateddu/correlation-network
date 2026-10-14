@@ -6,10 +6,8 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 
-from correlation_network.exceptions import (
-    InsufficientColumnsError,
-    NoCompleteObservationsError,
-)
+from correlation_network._validation import complete_pair
+from correlation_network.exceptions import InsufficientColumnsError
 
 
 class CramersVStrategy:
@@ -36,6 +34,8 @@ class CramersVStrategy:
         ------
         InsufficientColumnsError
             If fewer than 2 categorical columns are present.
+        NoCompleteObservationsError
+            If a pair has no rows where both columns are present.
         """
         categorical_cols = dataframe.select_dtypes(
             include=["object", "category"]
@@ -64,8 +64,11 @@ class CramersVStrategy:
     @staticmethod
     def _cramers_v(x: pd.Series, y: pd.Series) -> float:
         """Compute bias-corrected Cramer's V between two categorical series."""
+        x, y = complete_pair(x, y)
         contingency = pd.crosstab(index=x, columns=y)
-        chi2 = stats.chi2_contingency(observed=contingency)[0]
+        # Yates' continuity correction (scipy's default on 2x2 tables) shrinks
+        # chi2 and would bias V downward on top of the explicit correction below.
+        chi2 = stats.chi2_contingency(observed=contingency, correction=False)[0]
         n = contingency.values.sum()
         r, k = contingency.shape
 
@@ -158,14 +161,7 @@ class CorrelationRatioStrategy:
         NoCompleteObservationsError
             If the two columns share no rows where both values are present.
         """
-        valid = categories.notna() & values.notna()
-        if not valid.any():
-            raise NoCompleteObservationsError(
-                columns=(str(categories.name), str(values.name))
-            )
-
-        categories = categories[valid]
-        values = values[valid]
+        categories, values = complete_pair(categories, values)
 
         grand_mean = values.mean()
         ss_total = ((values - grand_mean) ** 2).sum()

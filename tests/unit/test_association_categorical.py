@@ -176,3 +176,27 @@ class TestCramersVDegenerateInput:
         df = pd.DataFrame({"varies": ["a", "b", "a", "b"], "constant": ["z"] * 4})
         result = CramersVStrategy().compute(df)
         assert result.loc["varies", "constant"] == 0.0
+
+
+class TestCramersVTwoByTwo:
+    def test_perfect_two_by_two_association_yields_one(self):
+        # Yates' continuity correction shrinks chi2 on 2x2 tables, which would
+        # pull a perfect association below 1
+        values = ["a"] * 50 + ["b"] * 50
+        df = pd.DataFrame({"x": values, "y": values})
+        result = CramersVStrategy().compute(df)
+        assert result.loc["x", "y"] == pytest.approx(1.0)
+
+
+class TestCramersVMissingValues:
+    def test_no_overlapping_rows_raises(self):
+        df = pd.DataFrame(
+            {
+                "p": ["a", "b", "a", None, None, None],
+                "q": [None, None, None, "a", "b", "b"],
+                "r": list("ababab"),
+            }
+        )
+        with pytest.raises(NoCompleteObservationsError) as excinfo:
+            CramersVStrategy().compute(df)
+        assert set(excinfo.value.columns) == {"p", "q"}

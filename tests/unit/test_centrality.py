@@ -132,6 +132,27 @@ class TestPathMetricsUseAssociationAsCloseness:
         # a strong negative association is still a strong association
         assert result["B"] > result["D"]
 
+    def test_eigenvector_is_non_negative_with_negative_weights(self):
+        graph = nx.Graph()
+        graph.add_edge("A", "B", weight=-0.9)
+        graph.add_edge("B", "C", weight=-0.9)
+        graph.add_edge("A", "C", weight=-0.8)
+        graph.add_edge("C", "D", weight=0.6)
+        result = CentralityAnalyzer(graph).eigenvector()
+        # signed weights break Perron-Frobenius and yield negative scores
+        assert (result >= 0).all()
+
+    def test_eigenvector_matches_absolute_weight_graph(self):
+        signed = nx.Graph()
+        signed.add_edge("A", "B", weight=-0.9)
+        signed.add_edge("B", "C", weight=0.5)
+        unsigned = nx.Graph()
+        unsigned.add_edge("A", "B", weight=0.9)
+        unsigned.add_edge("B", "C", weight=0.5)
+        result = CentralityAnalyzer(signed).eigenvector()
+        expected = CentralityAnalyzer(unsigned).eigenvector()
+        pd.testing.assert_series_equal(result, expected)
+
     def test_perfect_association_does_not_produce_zero_distance(self):
         graph = nx.Graph()
         graph.add_edge("A", "B", weight=1.0)

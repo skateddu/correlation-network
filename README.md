@@ -266,7 +266,7 @@ net = CorrelationNetwork(strategy=my_custom_strategy, threshold=0.3)
 | `degree()` | Normalized degree: connected neighbors as fraction of (n-1) |
 | `strength()` | Sum of absolute edge weights |
 | `betweenness()` | Frequency on shortest paths (weights converted to distances) |
-| `eigenvector()` | Influence based on connections to high-scoring nodes |
+| `eigenvector()` | Influence based on connections to high-scoring nodes (absolute weights) |
 | `closeness()` | Inverse average distance to all other nodes (weights converted to distances) |
 | `summary()` | DataFrame with all metrics combined |
 
@@ -286,7 +286,12 @@ convert weights with `distance = 1 - |weight|` before running Dijkstra, so
 shortest paths follow strongly associated pairs.
 
 `strength()` is a magnitude sum rather than a path metric, so it keeps using the
-raw absolute weights.
+raw absolute weights. `eigenvector()` also runs on absolute weights: signed
+weights can yield negative scores, which have no meaning as centrality.
+
+The default `kamada_kawai` layout applies the same `1 - |weight|` conversion,
+since it reads weights as target distances: strongly associated nodes are drawn
+close together.
 
 ## Visualization
 

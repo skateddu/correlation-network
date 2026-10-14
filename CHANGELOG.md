@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- Kamada-Kawai layout (the default) now converts association strength to
+  distance (`1 - |weight|`); it previously drew the strongest associations as
+  the longest edges
+- `CentralityAnalyzer.eigenvector()` uses absolute weights, so signed graphs
+  no longer produce negative centrality scores
+- Cramer's V no longer applies Yates' continuity correction on 2x2 tables,
+  which understated the association (a perfect 2x2 association now scores 1)
+- Pearson, Spearman, Kendall, Cramer's V, Mutual Information and PhiK now
+  raise `NoCompleteObservationsError` for a column pair with no complete rows,
+  as documented, instead of returning `NaN` (silently dropped as "no edge"),
+  a raw SciPy `ValueError`, or a fake `0.0`. This also applies to columns that
+  are entirely missing
+- `CorrelationNetwork.from_matrix()` accepts Polars matrices; rows are
+  labelled by column order since Polars has no row index
+
 ## [1.0.0] - 2026-08-13
 
 Initial release.

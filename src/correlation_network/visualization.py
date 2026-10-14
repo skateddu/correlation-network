@@ -2,6 +2,7 @@
 
 import functools
 from itertools import compress
+from typing import Any
 
 import networkx as nx
 import numpy as np
@@ -10,7 +11,7 @@ from matplotlib.colors import Normalize, TwoSlopeNorm
 from matplotlib.figure import Figure
 from matplotlib.lines import Line2D
 
-from correlation_network._graph_utils import abs_weight_graph
+from correlation_network._graph_utils import abs_weight_graph, distance_graph
 from correlation_network._types import CentralityMetric, LayoutAlgorithm
 from correlation_network.centrality import CentralityAnalyzer
 
@@ -105,16 +106,7 @@ class NetworkVisualizer:
         matplotlib.figure.Figure
             The figure object (not shown automatically).
         """
-        layout_fn = _LAYOUT_FUNCTIONS[layout]
-
-        # Layouts using shortest paths need non-negative weights
-        needs_abs = layout in ("kamada_kawai", "spring", "spectral") and any(
-            d.get("weight", 0) < 0 for _, _, d in self.graph.edges(data=True)
-        )
-        if needs_abs:
-            pos = layout_fn(abs_weight_graph(self.graph))
-        else:
-            pos = layout_fn(self.graph)
+        pos = self._layout_positions(layout=layout)
 
         fig, ax = plt.subplots(figsize=figsize, dpi=dpi)
 
@@ -212,6 +204,26 @@ class NetworkVisualizer:
         fig = self.plot(**plot_kwargs)
         fig.savefig(path, dpi=dpi, bbox_inches="tight")
         plt.close(fig)
+
+    def _layout_positions(self, layout: LayoutAlgorithm) -> dict[Any, np.ndarray]:
+        """Compute node positions, adapting weights to what the layout expects.
+
+        Kamada-Kawai reads weights as target *distances*, so association
+        strength is converted with ``1 - |weight|``; raw values would draw the
+        strongest associations as the longest edges. Spring and spectral read
+        weights as attraction and only need them non-negative.
+        """
+        has_negative = any(
+            d.get("weight", 0) < 0 for _, _, d in self.graph.edges(data=True)
+        )
+        match layout:
+            case "kamada_kawai":
+                layout_graph = distance_graph(self.graph)
+            case "spring" | "spectral" if has_negative:
+                layout_graph = abs_weight_graph(self.graph)
+            case _:
+                layout_graph = self.graph
+        return _LAYOUT_FUNCTIONS[layout](layout_graph)
 
     def _draw_edges_cmap(
         self,
