@@ -57,3 +57,37 @@ class TestAutoMissingValues:
         )
         with pytest.raises(NoCompleteObservationsError):
             AutoAssociationStrategy().compute(df)
+
+
+class TestAutoColumnTypes:
+    @pytest.fixture()
+    def frame_with_flag(self) -> pd.DataFrame:
+        """'flag' fully determines 'value'; 'other' is unrelated noise."""
+        flag = [True, False] * 50
+        return pd.DataFrame(
+            {
+                "flag": flag,
+                "value": [10.0 if f else 0.0 for f in flag],
+                "other": [float(i % 7) for i in range(100)],
+            }
+        )
+
+    def test_bool_column_is_kept(self, frame_with_flag: pd.DataFrame):
+        # select_dtypes("number") excludes bool, which used to drop it silently
+        result = AutoAssociationStrategy().compute(frame_with_flag)
+        assert "flag" in result.columns
+
+    def test_bool_column_is_treated_as_categorical(self, frame_with_flag: pd.DataFrame):
+        result = AutoAssociationStrategy().compute(frame_with_flag)
+        assert result.loc["flag", "value"] == pytest.approx(1.0)
+
+    def test_string_dtype_column_is_treated_as_categorical(self):
+        df = pd.DataFrame(
+            {
+                "label": pd.array(["a", "b"] * 20, dtype="string"),
+                "value": [1.0, 5.0] * 20,
+                "other": [float(i % 3) for i in range(40)],
+            }
+        )
+        result = AutoAssociationStrategy().compute(df)
+        assert result.loc["label", "value"] == pytest.approx(1.0)

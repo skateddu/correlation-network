@@ -154,6 +154,36 @@ class TestLayoutWeighting:
         assert all(np.isfinite(p).all() for p in pos.values())
 
 
+class TestEdgeColorNorm:
+    def test_positive_weights_stay_in_upper_half_of_colormap(self):
+        # with a diverging map the lower half means "negative": a weak
+        # positive association must not be painted with it
+        norm = NetworkVisualizer._edge_norm(np.array([0.3, 0.6, 0.9]))
+        assert norm(0.3) >= 0.5
+
+    def test_negative_weights_stay_in_lower_half_of_colormap(self):
+        norm = NetworkVisualizer._edge_norm(np.array([-0.9, -0.4]))
+        assert norm(-0.4) <= 0.5
+
+    def test_mixed_weights_center_zero(self):
+        norm = NetworkVisualizer._edge_norm(np.array([-0.4, 0.9]))
+        assert norm(0.0) == pytest.approx(0.5)
+
+
+class TestPlotArgumentValidation:
+    def test_unknown_layout_raises_value_error(self, sample_graph: nx.Graph):
+        with pytest.raises(ValueError, match="layout.*kamada_kawai"):
+            NetworkVisualizer(sample_graph).plot(layout="force_atlas")
+
+    @pytest.mark.parametrize("metric", ["summary", "pagerank", "_abs_graph"])
+    def test_unknown_centrality_metric_raises_value_error(
+        self, sample_graph: nx.Graph, metric: str
+    ):
+        # getattr-based dispatch used to accept any analyzer attribute
+        with pytest.raises(ValueError, match="centrality_metric"):
+            NetworkVisualizer(sample_graph).plot(centrality_metric=metric)
+
+
 class TestNodeSizes:
     def test_uniform_size_without_metric(self, sample_graph: nx.Graph):
         viz = NetworkVisualizer(sample_graph)

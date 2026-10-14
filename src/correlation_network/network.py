@@ -50,6 +50,12 @@ PRECOMPUTED_METHOD = "precomputed"
 _DEFAULT_CARDINALITY_THRESHOLD = 0.95
 
 
+def _is_consecutive_sequence(series: pd.Series) -> bool:
+    """Check whether the distinct values form a run of consecutive integers."""
+    values = np.sort(series.dropna().unique())
+    return len(values) > 1 and bool((np.diff(values) == 1).all())
+
+
 def _to_pandas(dataframe: Any) -> pd.DataFrame:
     """Convert a Polars DataFrame to pandas if needed.
 
@@ -107,8 +113,10 @@ class CorrelationNetwork:
         Custom strategy instance. Overrides ``method`` if provided.
     cardinality_threshold : float | None
         Maximum allowed cardinality ratio (nunique / nrows) for a column.
-        Columns exceeding this ratio are excluded as index-like variables.
-        Set to ``None`` to disable the filter. Default ``0.95``.
+        String and categorical columns reaching this ratio are excluded as
+        index-like variables; integer columns are excluded only if their
+        values also form a consecutive sequence (row numbers, auto-increment
+        keys). Set to ``None`` to disable the filter. Default ``0.95``.
 
     Attributes
     ----------
@@ -117,7 +125,8 @@ class CorrelationNetwork:
     adjacency_matrix_ : pd.DataFrame
         Thresholded association matrix (available after ``fit``).
     excluded_columns_ : list[str]
-        Columns excluded during preprocessing (datetime or high-cardinality).
+        Columns excluded during preprocessing (datetime or high-cardinality)
+        or left out by the strategy because of an unsupported type.
     """
 
     def __init__(
@@ -138,7 +147,10 @@ class CorrelationNetwork:
         self.method = method
         self.threshold = threshold
         self.cardinality_threshold = cardinality_threshold
-        self._strategy = strategy or _STRATEGY_REGISTRY[method]()
+        self.strategy = strategy
+        self._strategy = (
+            strategy if strategy is not None else _STRATEGY_REGISTRY[method]()
+        )
 
     def fit(
         self,
@@ -167,6 +179,7 @@ class CorrelationNetwork:
         dataframe = self._preprocess(dataframe)
 
         self.association_matrix_ = self._strategy.compute(dataframe)
+        self._record_unused_columns(input_columns=dataframe.columns)
         self.adjacency_matrix_ = self._apply_threshold(self.association_matrix_)
         return self
 
@@ -227,6 +240,7 @@ class CorrelationNetwork:
         instance.method = PRECOMPUTED_METHOD
         instance.threshold = threshold
         instance.cardinality_threshold = None
+        instance.strategy = None
         instance._strategy = None
         instance.excluded_columns_ = []
         instance.association_matrix_ = matrix
@@ -312,18 +326,8 @@ class CorrelationNetwork:
             excluded.extend(datetime_cols)
             dataframe = dataframe.drop(columns=datetime_cols)
 
-        # Exclude high-cardinality (index-like) columns.
-        # Only check integer and categorical columns — continuous floats
-        # naturally have near-unique values and produce valid correlations.
         if self.cardinality_threshold is not None:
-            n_rows = len(dataframe)
-            candidate_cols = dataframe.select_dtypes(
-                include=["integer", "object", "category"]
-            ).columns
-            nunique = dataframe[candidate_cols].nunique()
-            high_cardinality_cols = nunique[
-                nunique / n_rows >= self.cardinality_threshold
-            ].index.tolist()
+            high_cardinality_cols = self._high_cardinality_columns(dataframe)
             if high_cardinality_cols:
                 warnings.warn(
                     f"High-cardinality columns excluded: {high_cardinality_cols}",
@@ -343,6 +347,41 @@ class CorrelationNetwork:
 
         return dataframe
 
+    def _high_cardinality_columns(self, dataframe: pd.DataFrame) -> list[str]:
+        """Return index-like columns whose cardinality ratio is too high.
+
+        Continuous floats are never checked: they are naturally near-unique and
+        still produce valid correlations. Integer columns must additionally be
+        a consecutive sequence once sorted (row numbers, auto-increment keys);
+        on small frames genuine integer measurements are near-unique as well.
+        """
+        candidates = dataframe.select_dtypes(include=["integer", "object", "category"])
+        ratio = candidates.nunique() / len(dataframe)
+        flagged = ratio[ratio >= self.cardinality_threshold].index
+        return [
+            col
+            for col in flagged
+            if not pd.api.types.is_integer_dtype(dataframe[col])
+            or _is_consecutive_sequence(dataframe[col])
+        ]
+
+    def _record_unused_columns(self, input_columns: pd.Index) -> None:
+        """Warn about and record columns the strategy left out of its matrix.
+
+        Strategies only use the column types they support (e.g. correlations
+        skip strings); without this, such columns would vanish from the graph
+        without notice.
+        """
+        computed = set(self.association_matrix_.columns)
+        unused = [col for col in input_columns if col not in computed]
+        if unused:
+            warnings.warn(
+                f"Columns not used by the strategy (unsupported type): {unused}",
+                UserWarning,
+                stacklevel=3,
+            )
+            self.excluded_columns_.extend(unused)
+
     def _apply_threshold(self, matrix: pd.DataFrame) -> pd.DataFrame:
         """Zero out values below the threshold (by absolute value).
 
@@ -357,4 +396,8 @@ class CorrelationNetwork:
         return matrix.where(cond=condition, other=0)
 
     def __repr__(self) -> str:
-        return f"CorrelationNetwork(method={self.method!r}, threshold={self.threshold})"
+        if self.strategy is not None:
+            source = f"strategy={type(self.strategy).__name__}"
+        else:
+            source = f"method={self.method!r}"
+        return f"CorrelationNetwork({source}, threshold={self.threshold})"

@@ -23,6 +23,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   are entirely missing
 - `CorrelationNetwork.from_matrix()` accepts Polars matrices; rows are
   labelled by column order since Polars has no row index
+- Bool and pandas `string` columns are treated as categorical by
+  `method="auto"`, Cramer's V and the correlation ratio; `auto` used to drop
+  them silently
+- Columns a strategy cannot use (e.g. strings with `pearson`) now raise a
+  `UserWarning` and are recorded in `excluded_columns_` instead of vanishing
+  from the graph without notice
+- The high-cardinality filter no longer excludes genuine integer features on
+  small frames: integer columns are dropped only when their values form a
+  consecutive sequence
+- `repr()` names the custom strategy instead of the unused default method
+- Edge colormap keeps 0 at its centre for single-signed weights, so weak
+  positive associations are no longer painted in the "negative" colour
+- `NetworkVisualizer.plot()` raises `ValueError` for an unknown `layout` or
+  `centrality_metric` (previously `KeyError`, or any analyzer attribute was
+  accepted as a metric)
 
 ## [1.0.0] - 2026-08-13
 

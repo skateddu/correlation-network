@@ -162,16 +162,23 @@ graph = CorrelationNetwork(method="pearson", threshold=0.5).fit_transform(df_pol
 | `method` | `"pearson"` | Association method (see table below) |
 | `threshold` | `0.5` | Minimum `\|weight\|` to keep an edge (inclusive) |
 | `strategy` | `None` | Custom `AssociationStrategy` instance (overrides `method`) |
-| `cardinality_threshold` | `0.95` | Exclude columns with `nunique/nrows >= threshold` |
+| `cardinality_threshold` | `0.95` | Exclude index-like columns with `nunique/nrows >= threshold` (see below) |
 
 ## Preprocessing
 
 Before computing associations, `fit()` automatically excludes:
 
 - **Datetime columns** (not suitable for correlation)
-- **High-cardinality columns** where `nunique / nrows >= cardinality_threshold` (e.g. IDs, UUIDs)
+- **High-cardinality columns** where `nunique / nrows >= cardinality_threshold` (e.g. IDs, UUIDs).
+  Integer columns are excluded only when their values also form a consecutive
+  sequence (row numbers, auto-increment keys, even if shuffled): on small frames
+  genuine integer measurements such as age or income are near-unique too
 
-Excluded columns are stored in `net.excluded_columns_` after fitting:
+After computing the matrix, columns the strategy cannot use (e.g. strings with
+`method="pearson"`) are reported with a warning instead of silently disappearing
+from the graph.
+
+All these columns are stored in `net.excluded_columns_` after fitting:
 
 ```python
 net = CorrelationNetwork(method="auto", threshold=0.3)
@@ -240,6 +247,8 @@ When `method="auto"`, the library detects column dtypes and dispatches:
 | categorical — categorical | Cramer's V |
 | mixed | Correlation Ratio |
 
+Bool and string columns count as categorical.
+
 ```python
 net = CorrelationNetwork(method="auto", threshold=0.3)
 graph = net.fit_transform(df)
@@ -303,7 +312,7 @@ close together.
 | `dpi` | `100` | Figure resolution |
 | `node_color` | `tab:blue` | Node color (ignored when `community_colors=True`) |
 | `community_colors` | `False` | Color nodes by greedy modularity community |
-| `edge_cmap` | `RdYlGn` | Continuous colormap for edges (`None` for two-color mode) |
+| `edge_cmap` | `RdYlGn` | Diverging colormap for edges, centred at 0 (`None` for two-color mode) |
 | `positive_edge_color` | `darkgreen` | Positive edge color (two-color mode only) |
 | `negative_edge_color` | `tab:red` | Negative edge color (two-color mode only) |
 | `font_size` | `10` | Font size for node labels |

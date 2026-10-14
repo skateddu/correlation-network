@@ -7,6 +7,10 @@ import pandas as pd
 from scipy import stats
 
 from correlation_network._validation import complete_pair
+from correlation_network.association._dtypes import (
+    categorical_columns,
+    numeric_columns,
+)
 from correlation_network.exceptions import InsufficientColumnsError
 
 
@@ -23,7 +27,8 @@ class CramersVStrategy:
         Parameters
         ----------
         dataframe : pd.DataFrame
-            Input data. Only object/category dtype columns are used.
+            Input data. Only object, category, bool and string columns are
+            used.
 
         Returns
         -------
@@ -37,9 +42,7 @@ class CramersVStrategy:
         NoCompleteObservationsError
             If a pair has no rows where both columns are present.
         """
-        categorical_cols = dataframe.select_dtypes(
-            include=["object", "category"]
-        ).columns.tolist()
+        categorical_cols = categorical_columns(dataframe)
         if len(categorical_cols) < 2:
             raise InsufficientColumnsError(
                 method="cramers_v",
@@ -114,10 +117,8 @@ class CorrelationRatioStrategy:
         NoCompleteObservationsError
             If a pair has no rows where both columns are present.
         """
-        cat_cols = dataframe.select_dtypes(
-            include=["object", "category"]
-        ).columns.tolist()
-        num_cols = dataframe.select_dtypes(include="number").columns.tolist()
+        cat_cols = categorical_columns(dataframe)
+        num_cols = numeric_columns(dataframe)
         if not cat_cols or not num_cols:
             raise InsufficientColumnsError(
                 method="correlation_ratio",

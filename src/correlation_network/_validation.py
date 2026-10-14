@@ -1,5 +1,7 @@
 """Input validation utilities."""
 
+from collections.abc import Collection
+
 import numpy as np
 import pandas as pd
 
@@ -89,4 +91,27 @@ def check_pairwise_overlap(dataframe: pd.DataFrame) -> None:
         names = dataframe.columns
         raise NoCompleteObservationsError(
             columns=(str(names[rows[0]]), str(names[cols[0]]))
+        )
+
+
+def check_option(name: str, value: object, options: Collection[str]) -> None:
+    """Ensure a string argument is one of the supported options.
+
+    Parameters
+    ----------
+    name : str
+        Argument name, used in the error message.
+    value : object
+        Value received.
+    options : Collection[str]
+        Accepted values.
+
+    Raises
+    ------
+    ValueError
+        If ``value`` is not in ``options``.
+    """
+    if value not in options:
+        raise ValueError(
+            f"Unknown {name} {value!r}. Available options: {tuple(options)}"
         )

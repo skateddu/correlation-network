@@ -200,3 +200,20 @@ class TestCramersVMissingValues:
         with pytest.raises(NoCompleteObservationsError) as excinfo:
             CramersVStrategy().compute(df)
         assert set(excinfo.value.columns) == {"p", "q"}
+
+
+class TestCategoricalColumnTypes:
+    def test_cramers_v_treats_bool_like_string_labels(self):
+        a = [True, False, True, True] * 10
+        b = [True, False, False, True] * 10
+        as_bool = pd.DataFrame({"a": a, "b": b})
+        as_str = as_bool.astype(str)
+        result = CramersVStrategy().compute(as_bool).loc["a", "b"]
+        expected = CramersVStrategy().compute(as_str).loc["a", "b"]
+        assert result == pytest.approx(expected)
+
+    def test_correlation_ratio_accepts_bool_categories(self):
+        flag = [True, False] * 20
+        df = pd.DataFrame({"flag": flag, "v": [3.0 if f else 1.0 for f in flag]})
+        result = CorrelationRatioStrategy().compute(df)
+        assert result.loc["flag", "v"] == pytest.approx(1.0)
