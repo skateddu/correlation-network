@@ -2,7 +2,7 @@
 
 import functools
 from itertools import compress
-from typing import Any
+from typing import Any, get_args
 
 import networkx as nx
 import numpy as np
@@ -13,6 +13,7 @@ from matplotlib.lines import Line2D
 
 from correlation_network._graph_utils import abs_weight_graph, distance_graph
 from correlation_network._types import CentralityMetric, LayoutAlgorithm
+from correlation_network._validation import check_option
 from correlation_network.centrality import CentralityAnalyzer
 
 _LAYOUT_FUNCTIONS = {
@@ -85,8 +86,9 @@ class NetworkVisualizer:
             If ``True``, detect communities via greedy modularity and color
             each node by its community. Overrides ``node_color``.
         edge_cmap : str | None
-            Matplotlib colormap for continuous edge coloring based on weight.
-            When set, a colorbar is shown. When ``None``, falls back to
+            Matplotlib colormap for continuous edge coloring based on weight,
+            read as diverging around 0 (lower half = negative). When set, a
+            colorbar is shown. When ``None``, falls back to
             the two-color mode using ``positive_edge_color`` / ``negative_edge_color``.
         positive_edge_color : str
             Color for positive edges (only used when ``edge_cmap`` is ``None``).
@@ -106,6 +108,13 @@ class NetworkVisualizer:
         matplotlib.figure.Figure
             The figure object (not shown automatically).
         """
+        check_option(name="layout", value=layout, options=_LAYOUT_FUNCTIONS)
+        if centrality_metric is not None:
+            check_option(
+                name="centrality_metric",
+                value=centrality_metric,
+                options=get_args(CentralityMetric),
+            )
         pos = self._layout_positions(layout=layout)
 
         fig, ax = plt.subplots(figsize=figsize, dpi=dpi)
@@ -239,13 +248,7 @@ class NetworkVisualizer:
     ) -> None:
         """Draw edges colored by a continuous colormap with a colorbar."""
         cmap = plt.get_cmap(cmap_name)
-        w_min, w_max = float(weights.min()), float(weights.max())
-
-        if w_min < 0 < w_max:
-            norm = TwoSlopeNorm(vcenter=0, vmin=w_min, vmax=w_max)
-        else:
-            norm = Normalize(vmin=w_min, vmax=w_max)
-
+        norm = self._edge_norm(weights)
         edge_colors = cmap(norm(weights))
 
         nx.draw_networkx_edges(
@@ -262,6 +265,21 @@ class NetworkVisualizer:
         sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
         sm.set_array([])
         fig.colorbar(sm, ax=ax, label="Association strength", shrink=0.8)
+
+    @staticmethod
+    def _edge_norm(weights: np.ndarray) -> Normalize:
+        """Map edge weights to colormap positions with 0 at the centre.
+
+        The edge colormap is read as diverging: its lower half means negative
+        association. Stretching single-signed weights over the full range
+        would paint the weakest positive edge in the "negative" colour, so
+        such weights keep a symmetric range around 0 instead.
+        """
+        w_min, w_max = float(weights.min()), float(weights.max())
+        if w_min < 0 < w_max:
+            return TwoSlopeNorm(vcenter=0, vmin=w_min, vmax=w_max)
+        limit = max(abs(w_min), abs(w_max)) or 1.0
+        return Normalize(vmin=-limit, vmax=limit)
 
     def _draw_edges_two_color(
         self,

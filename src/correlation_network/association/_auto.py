@@ -8,6 +8,10 @@ from correlation_network.association._categorical import (
     CramersVStrategy,
 )
 from correlation_network.association._correlation import SpearmanStrategy
+from correlation_network.association._dtypes import (
+    categorical_columns,
+    numeric_columns,
+)
 
 
 class AutoAssociationStrategy:
@@ -17,6 +21,8 @@ class AutoAssociationStrategy:
     - numeric-numeric: Spearman correlation
     - categorical-categorical: Cramer's V
     - categorical-numeric: Correlation ratio (eta)
+
+    Bool and string columns count as categorical.
 
     Notes
     -----
@@ -61,10 +67,8 @@ class AutoAssociationStrategy:
         pd.DataFrame
             Symmetric association matrix combining all column types.
         """
-        num_cols = dataframe.select_dtypes(include="number").columns.tolist()
-        cat_cols = dataframe.select_dtypes(
-            include=["object", "category"]
-        ).columns.tolist()
+        num_cols = numeric_columns(dataframe)
+        cat_cols = categorical_columns(dataframe)
         all_cols = num_cols + cat_cols
         n = len(all_cols)
         matrix = np.eye(n)

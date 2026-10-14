@@ -176,6 +176,47 @@ class TestPreprocessing:
         with pytest.raises(ValueError, match="Fewer than 2 columns remain"):
             net.fit(df)
 
+    def test_unique_integer_features_are_kept_on_small_data(self):
+        # on a handful of rows any real integer measurement is near-unique;
+        # only consecutive sequences look like identifiers
+        df = pd.DataFrame(
+            {
+                "age": [23, 35, 41, 52, 29, 60, 33, 47],
+                "income": [20, 40, 50, 70, 30, 90, 38, 61],
+                "score": [0.1, 0.3, 0.2, 0.5, 0.4, 0.7, 0.2, 0.6],
+            }
+        )
+        net = CorrelationNetwork(threshold=0.3).fit(df)
+        assert net.excluded_columns_ == []
+
+    def test_shuffled_consecutive_integer_id_is_excluded(
+        self, numeric_dataframe: pd.DataFrame
+    ):
+        df = numeric_dataframe.copy()
+        rng = np.random.default_rng(0)
+        df["customer_id"] = rng.permutation(np.arange(1000, 1000 + len(df)))
+        net = CorrelationNetwork(threshold=0.3)
+        with pytest.warns(UserWarning, match="High-cardinality"):
+            net.fit(df)
+        assert "customer_id" in net.excluded_columns_
+
+
+class TestColumnsIgnoredByStrategy:
+    def test_unsupported_column_triggers_warning(self, numeric_dataframe: pd.DataFrame):
+        df = numeric_dataframe.assign(label=["a", "b"] * 100)
+        net = CorrelationNetwork(method="pearson", threshold=0.3)
+        with pytest.warns(UserWarning, match="not used by the strategy.*label"):
+            net.fit(df)
+
+    def test_unsupported_column_is_recorded_as_excluded(
+        self, numeric_dataframe: pd.DataFrame
+    ):
+        df = numeric_dataframe.assign(label=["a", "b"] * 100)
+        net = CorrelationNetwork(method="pearson", threshold=0.3)
+        with pytest.warns(UserWarning):
+            net.fit(df)
+        assert net.excluded_columns_ == ["label"]
+
 
 class TestFromMatrix:
     @pytest.fixture()
@@ -336,3 +377,12 @@ class TestRepr:
     def test_repr(self):
         net = CorrelationNetwork(method="spearman", threshold=0.4)
         assert repr(net) == "CorrelationNetwork(method='spearman', threshold=0.4)"
+
+    def test_repr_names_custom_strategy(self):
+        class MyStrategy:
+            def compute(self, dataframe: pd.DataFrame) -> pd.DataFrame:
+                return dataframe.corr()
+
+        net = CorrelationNetwork(strategy=MyStrategy(), threshold=0.4)
+        # the unused default method must not be reported as the one in use
+        assert repr(net) == "CorrelationNetwork(strategy=MyStrategy, threshold=0.4)"
