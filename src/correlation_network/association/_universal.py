@@ -13,6 +13,7 @@ from correlation_network._validation import (
     check_pairwise_overlap,
     complete_pair,
 )
+from correlation_network.association._dtypes import numeric_columns
 from correlation_network.exceptions import InsufficientColumnsError
 
 
@@ -125,7 +126,7 @@ class MutualInformationStrategy:
     def _discretize(self, dataframe: pd.DataFrame) -> pd.DataFrame:
         """Discretize numeric columns into bins."""
         result = dataframe.copy()
-        numeric_cols = result.select_dtypes(include="number").columns
+        numeric_cols = numeric_columns(result)
         result[numeric_cols] = result[numeric_cols].apply(self._bin)
         return result
 

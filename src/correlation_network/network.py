@@ -168,9 +168,6 @@ class CorrelationNetwork:
         self.threshold = threshold
         self.cardinality_threshold = cardinality_threshold
         self.strategy = strategy
-        self._strategy = (
-            strategy if strategy is not None else _STRATEGY_REGISTRY[method]()
-        )
 
     def fit(
         self,
@@ -198,7 +195,12 @@ class CorrelationNetwork:
 
         dataframe = self._preprocess(dataframe)
 
-        self.association_matrix_ = self._strategy.compute(dataframe)
+        strategy = (
+            self.strategy
+            if self.strategy is not None
+            else _STRATEGY_REGISTRY[self.method]()
+        )
+        self.association_matrix_ = strategy.compute(dataframe)
         self._record_unused_columns(input_columns=dataframe.columns)
         self.adjacency_matrix_ = self._apply_threshold(self.association_matrix_)
         return self
@@ -261,7 +263,6 @@ class CorrelationNetwork:
         instance.threshold = threshold
         instance.cardinality_threshold = None
         instance.strategy = None
-        instance._strategy = None
         instance.excluded_columns_ = []
         instance.association_matrix_ = matrix
         # `_apply_threshold` is a no-op when `threshold` is None.

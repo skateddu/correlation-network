@@ -206,16 +206,11 @@ class TestPreprocessing:
 class TestWarningLocation:
     """Preprocessing warnings must point at the user's call, not library code."""
 
-    def test_fit_warning_points_at_caller(self, dataframe_with_datetime):
+    @pytest.mark.parametrize("method_name", ["fit", "fit_transform"])
+    def test_warning_points_at_caller(self, method_name, dataframe_with_datetime):
         net = CorrelationNetwork(threshold=0.3)
         with pytest.warns(UserWarning, match="Datetime") as record:
-            net.fit(dataframe_with_datetime)
-        assert record[0].filename == __file__
-
-    def test_fit_transform_warning_points_at_caller(self, dataframe_with_datetime):
-        net = CorrelationNetwork(threshold=0.3)
-        with pytest.warns(UserWarning, match="Datetime") as record:
-            net.fit_transform(dataframe_with_datetime)
+            getattr(net, method_name)(dataframe_with_datetime)
         assert record[0].filename == __file__
 
 

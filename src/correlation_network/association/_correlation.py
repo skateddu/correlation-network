@@ -4,6 +4,7 @@ import pandas as pd
 
 from correlation_network._types import CorrelationMethod
 from correlation_network._validation import check_pairwise_overlap
+from correlation_network.association._dtypes import numeric_columns
 from correlation_network.exceptions import InsufficientColumnsError
 
 
@@ -32,15 +33,18 @@ class _CorrelationStrategy:
         NoCompleteObservationsError
             If a pair has no rows where both columns are present.
         """
-        numeric_cols = dataframe.select_dtypes(include="number").columns.tolist()
+        numeric_cols = numeric_columns(dataframe)
         if len(numeric_cols) < 2:
             raise InsufficientColumnsError(
                 method=self._method,
                 required="at least 2 numeric columns",
                 found=numeric_cols,
             )
-        check_pairwise_overlap(dataframe[numeric_cols])
-        return dataframe.corr(method=self._method, numeric_only=True)
+        matrix = dataframe.corr(method=self._method, numeric_only=True)
+        # numeric_only also keeps bool columns, so check the columns pandas
+        # actually used rather than numeric_cols
+        check_pairwise_overlap(dataframe[matrix.columns])
+        return matrix
 
 
 class PearsonStrategy(_CorrelationStrategy):
