@@ -14,10 +14,10 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@v10.3.0
         with:
           enable-cache: true
 
@@ -30,6 +30,9 @@ jobs:
       - name: Ruff format
         run: uv run ruff format --check src/ tests/
 
+      - name: Mypy
+        run: uv run mypy
+
   test:
     runs-on: ubuntu-latest
     strategy:
@@ -37,10 +40,10 @@ jobs:
       matrix:
         python-version: ["3.10", "3.11", "3.12", "3.13"]
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@v10.3.0
         with:
           enable-cache: true
 
@@ -52,3 +55,21 @@ jobs:
           uv run --python ${{ matrix.python-version }}
           pytest --cov=src/correlation_network --cov-report=term-missing
           --cov-fail-under=80
+
+  # Installs the lower bound of every direct dependency, so the minimums
+  # declared in pyproject.toml are tested rather than assumed
+  lowest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10.3.0
+
+      - name: Install lowest direct dependencies
+        run: >
+          uv sync --all-extras --no-group typing
+          --resolution lowest-direct --python 3.10
+
+      - name: Run tests
+        run: uv run --no-sync --python 3.10 pytest

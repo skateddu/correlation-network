@@ -60,9 +60,7 @@ class CramersVStrategy:
             matrix[i, j] = value
             matrix[j, i] = value
 
-        return pd.DataFrame(
-            data=matrix, index=categorical_cols, columns=categorical_cols
-        )
+        return pd.DataFrame(data=matrix, index=categorical_cols, columns=categorical_cols)
 
     @staticmethod
     def _cramers_v(x: pd.Series, y: pd.Series) -> float:
@@ -172,7 +170,5 @@ class CorrelationRatioStrategy:
             return 0.0
 
         group_stats = values.groupby(categories, observed=True).agg(["mean", "count"])
-        ss_between = (
-            group_stats["count"] * (group_stats["mean"] - grand_mean) ** 2
-        ).sum()
+        ss_between = (group_stats["count"] * (group_stats["mean"] - grand_mean) ** 2).sum()
         return np.sqrt(ss_between / ss_total)

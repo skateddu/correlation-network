@@ -43,9 +43,7 @@ class TestMutualInformationStrategy:
         fine = MutualInformationStrategy(n_bins=20).compute(numeric_dataframe)
         assert coarse.loc["x", "y"] != fine.loc["x", "y"]
 
-    def test_fine_binning_inflates_independent_pairs(
-        self, numeric_dataframe: pd.DataFrame
-    ):
+    def test_fine_binning_inflates_independent_pairs(self, numeric_dataframe: pd.DataFrame):
         # With few samples per bin, MI overestimates: x and z are independent by
         # construction, yet their score climbs steadily with the bin count.
         # This is a known bias, not a bug — it is why n_bins defaults to 10.
@@ -97,9 +95,7 @@ class TestPhiKStrategy:
 
 
 class TestMutualInformationMissingValues:
-    def test_no_overlapping_rows_raises(
-        self, disjoint_categorical_dataframe: pd.DataFrame
-    ):
+    def test_no_overlapping_rows_raises(self, disjoint_categorical_dataframe: pd.DataFrame):
         # an empty contingency table would otherwise report a fake 0.0
         with pytest.raises(NoCompleteObservationsError) as excinfo:
             MutualInformationStrategy().compute(disjoint_categorical_dataframe)
@@ -127,9 +123,7 @@ class TestMutualInformationBinning:
 
     def test_uniform_binning_is_the_default(self, frame_with_outlier):
         default = MutualInformationStrategy().compute(frame_with_outlier)
-        uniform = MutualInformationStrategy(binning="uniform").compute(
-            frame_with_outlier
-        )
+        uniform = MutualInformationStrategy(binning="uniform").compute(frame_with_outlier)
         pd.testing.assert_frame_equal(default, uniform)
 
     def test_quantile_binning_handles_repeated_values(self):

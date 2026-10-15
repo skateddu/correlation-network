@@ -94,9 +94,7 @@ def check_pairwise_overlap(dataframe: pd.DataFrame) -> None:
     rows, cols = np.nonzero(np.triu(overlap == 0, k=1))
     if rows.size:
         names = dataframe.columns
-        raise NoCompleteObservationsError(
-            columns=(str(names[rows[0]]), str(names[cols[0]]))
-        )
+        raise NoCompleteObservationsError(columns=(str(names[rows[0]]), str(names[cols[0]])))
 
 
 def check_option(name: str, value: object, options: Collection[str]) -> None:
@@ -117,6 +115,4 @@ def check_option(name: str, value: object, options: Collection[str]) -> None:
         If ``value`` is not in ``options``.
     """
     if value not in options:
-        raise ValueError(
-            f"Unknown {name} {value!r}. Available options: {tuple(options)}"
-        )
+        raise ValueError(f"Unknown {name} {value!r}. Available options: {tuple(options)}")

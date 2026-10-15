@@ -1,6 +1,8 @@
 # Correlation Network
 
-![Python](https://img.shields.io/badge/python-≥3.10-blue?logo=python&logoColor=white)
+[![PyPI](https://img.shields.io/pypi/v/correlation-network)](https://pypi.org/project/correlation-network/)
+[![Python](https://img.shields.io/pypi/pyversions/correlation-network?logo=python&logoColor=white)](https://pypi.org/project/correlation-network/)
+[![CI](https://github.com/skateddu/correlation-network/actions/workflows/ci.yml/badge.svg)](https://github.com/skateddu/correlation-network/actions/workflows/ci.yml)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Code style: Ruff](https://img.shields.io/badge/code%20style-ruff-d4aa00)
 ![Type: Typed](https://img.shields.io/badge/typing-typed-blue)
@@ -15,38 +17,6 @@ Python library that builds association networks from pandas DataFrames. Computes
 - **Centrality**: degree, strength, betweenness, eigenvector, closeness — individual or summary table
 - **Visualization**: continuous colormap, community detection coloring, centrality-scaled nodes, per-edge alpha
 - **Extensible**: any object implementing the `AssociationStrategy` protocol can be plugged in
-
-## Project Structure
-
-```
-correlation-network/
-├── src/correlation_network/
-│   ├── __init__.py              # Public API exports
-│   ├── network.py               # CorrelationNetwork (main entry point)
-│   ├── centrality.py            # CentralityAnalyzer (5 metrics + summary)
-│   ├── visualization.py         # NetworkVisualizer (5 layouts, colormap, community colors)
-│   ├── exceptions.py            # CorrelationNetworkError base + NotFittedError, InsufficientColumnsError, NoCompleteObservationsError
-│   ├── py.typed                 # PEP 561 marker: ships inline type information
-│   ├── _types.py                # Literal type aliases (AssociationMethod, BinningMethod, CentralityMetric, LayoutAlgorithm, CorrelationMethod)
-│   ├── _validation.py           # check_is_fitted guard
-│   ├── _graph_utils.py          # Shared graph utilities (abs_weight_graph, distance_graph)
-│   └── association/
-│       ├── __init__.py           # Re-exports all strategies
-│       ├── _base.py              # AssociationStrategy (Protocol)
-│       ├── _correlation.py       # Pearson, Spearman, Kendall
-│       ├── _categorical.py       # Cramer's V, Correlation Ratio (eta)
-│       ├── _universal.py         # PhiK, Mutual Information
-│       └── _auto.py              # Auto-detection + dispatch
-├── tests/
-│   ├── conftest.py               # Shared fixtures (numeric, categorical, mixed DataFrames)
-│   ├── unit/                     # One test file per module
-│   └── integration/              # End-to-end pipeline tests
-├── .github/workflows/ci.yml      # Lint, format, and test matrix (Python 3.10–3.13)
-├── pyproject.toml                # Metadata, dependencies, ruff and pytest config
-├── uv.lock                       # Locked dependency versions
-├── CHANGELOG.md                  # Keep a Changelog format
-└── LICENSE                       # MIT
-```
 
 ## Dependencies
 
@@ -67,44 +37,22 @@ Optional extras:
 
 ## Installation
 
-Requires Python >= 3.10 and [uv](https://docs.astral.sh/uv/).
+Requires Python >= 3.10.
 
 ```bash
-git clone https://github.com/skateddu/correlation-network.git
-cd correlation-network
-uv sync
+pip install correlation-network
 ```
 
 With optional extras:
 
 ```bash
-uv sync --extra phik       # PhiK correlation support
-uv sync --extra polars     # Polars DataFrame support
-uv sync --all-extras       # All optional dependencies
+pip install "correlation-network[phik]"     # PhiK correlation support
+pip install "correlation-network[polars]"   # Polars DataFrame support
+pip install "correlation-network[phik,polars]"
 ```
 
-## Architecture
-
-The library follows a pipeline pattern: DataFrame in, graph out.
-
-```mermaid
-graph LR
-    A[DataFrame] -->|fit| B[Association Matrix]
-    B -->|transform| C[nx.Graph]
-    C --> D[CentralityAnalyzer]
-    C --> E[NetworkVisualizer]
-```
-
-| Concept | Implementation | Module |
-|---------|---------------|--------|
-| Pluggable metrics | `AssociationStrategy` Protocol | `association/_base.py` |
-| Metric dispatch | `_STRATEGY_REGISTRY` dict | `network.py` |
-| Fit/transform pipeline | scikit-learn-style API | `network.py` |
-| Graph centrality | NetworkX algorithms wrapper | `centrality.py` |
-| Negative weight handling | `abs_weight_graph()` helper | `_graph_utils.py` |
-| Association → distance | `distance_graph()` helper | `_graph_utils.py` |
-| Fitted state guard | `check_is_fitted()` function | `_validation.py` |
-| Rendering | Matplotlib + NetworkX drawing | `visualization.py` |
+With [uv](https://docs.astral.sh/uv/): `uv add correlation-network` (extras:
+`uv add "correlation-network[phik]"`).
 
 ## Quick Start
 
@@ -350,24 +298,65 @@ fig = viz.plot(
 viz.save("network.png", dpi=150, community_colors=True)
 ```
 
-## Testing
+## Development
 
-```bash
-# Run all tests
-uv run pytest
+Setup, test commands and contribution guidelines are in [CONTRIBUTING.md](https://github.com/skateddu/correlation-network/blob/main/CONTRIBUTING.md).
 
-# Run a specific test file
-uv run pytest tests/unit/test_network.py -v
+### Architecture
 
-# Run tests matching a pattern
-uv run pytest -k "centrality" -v
+The library follows a pipeline pattern: DataFrame in, graph out.
 
-# Run with coverage
-uv run pytest --cov=src/correlation_network
+```mermaid
+graph LR
+    A[DataFrame] -->|fit| B[Association Matrix]
+    B -->|transform| C[nx.Graph]
+    C --> D[CentralityAnalyzer]
+    C --> E[NetworkVisualizer]
+```
 
-# Lint and format
-uv run ruff check src/ tests/
-uv run ruff format src/ tests/
+| Concept | Implementation | Module |
+|---------|---------------|--------|
+| Pluggable metrics | `AssociationStrategy` Protocol | `association/_base.py` |
+| Metric dispatch | `_STRATEGY_REGISTRY` dict | `network.py` |
+| Fit/transform pipeline | scikit-learn-style API | `network.py` |
+| Graph centrality | NetworkX algorithms wrapper | `centrality.py` |
+| Negative weight handling | `abs_weight_graph()` helper | `_graph_utils.py` |
+| Association → distance | `distance_graph()` helper | `_graph_utils.py` |
+| Fitted state guard | `check_is_fitted()` function | `_validation.py` |
+| Rendering | Matplotlib + NetworkX drawing | `visualization.py` |
+
+### Project Structure
+
+```
+correlation-network/
+├── src/correlation_network/
+│   ├── __init__.py              # Public API exports
+│   ├── network.py               # CorrelationNetwork (main entry point)
+│   ├── centrality.py            # CentralityAnalyzer (5 metrics + summary)
+│   ├── visualization.py         # NetworkVisualizer (5 layouts, colormap, community colors)
+│   ├── exceptions.py            # CorrelationNetworkError base + NotFittedError, InsufficientColumnsError, NoCompleteObservationsError
+│   ├── py.typed                 # PEP 561 marker: ships inline type information
+│   ├── _types.py                # Literal type aliases (AssociationMethod, BinningMethod, CentralityMetric, LayoutAlgorithm, CorrelationMethod)
+│   ├── _validation.py           # Fitted guard, missing-data checks, option validation
+│   ├── _graph_utils.py          # Shared graph utilities (abs_weight_graph, distance_graph)
+│   └── association/
+│       ├── __init__.py           # Re-exports all strategies
+│       ├── _base.py              # AssociationStrategy (Protocol)
+│       ├── _dtypes.py            # Numeric vs categorical column detection
+│       ├── _correlation.py       # Pearson, Spearman, Kendall
+│       ├── _categorical.py       # Cramer's V, Correlation Ratio (eta)
+│       ├── _universal.py         # PhiK, Mutual Information
+│       └── _auto.py              # Auto-detection + dispatch
+├── tests/
+│   ├── conftest.py               # Shared fixtures (numeric, categorical, mixed DataFrames)
+│   ├── unit/                     # One test file per module
+│   └── integration/              # End-to-end pipeline tests
+├── .github/workflows/ci.yml      # Lint, format, mypy, test matrix (3.10–3.13), lowest dependency versions
+├── pyproject.toml                # Metadata, dependencies, ruff, mypy and pytest config
+├── uv.lock                       # Locked dependency versions
+├── CHANGELOG.md                  # Keep a Changelog format
+├── CONTRIBUTING.md               # Development setup and workflow
+└── LICENSE                       # MIT
 ```
 
 ## References

@@ -51,17 +51,11 @@ class AutoAssociationStrategy:
         categorical_strategy: AssociationStrategy | None = None,
         mixed_strategy: AssociationStrategy | None = None,
     ) -> None:
-        self._numeric = (
-            numeric_strategy if numeric_strategy is not None else SpearmanStrategy()
-        )
+        self._numeric = numeric_strategy if numeric_strategy is not None else SpearmanStrategy()
         self._categorical = (
-            categorical_strategy
-            if categorical_strategy is not None
-            else CramersVStrategy()
+            categorical_strategy if categorical_strategy is not None else CramersVStrategy()
         )
-        self._mixed = (
-            mixed_strategy if mixed_strategy is not None else CorrelationRatioStrategy()
-        )
+        self._mixed = mixed_strategy if mixed_strategy is not None else CorrelationRatioStrategy()
 
     def compute(self, dataframe: pd.DataFrame) -> pd.DataFrame:
         """Compute a combined association matrix using type-aware dispatch.

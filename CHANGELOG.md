@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `correlation_network.__version__`, read from the installed package metadata
+- `CONTRIBUTING.md` with development setup, checks and conventions
+- CI type-checks the package with mypy (strict mode) and runs the test suite
+  against the lowest supported dependency versions
+
+### Changed
+
+- Minimum dependency versions lowered to the oldest releases the test suite
+  passes on: `pandas>=2.0` (was 2.3.3) and `networkx>=3.0` (was 3.4.2);
+  `phik>=0.12.2` (was 0.12), since earlier releases ship no Python 3.10 wheels
+- README reorganised for package users: `pip install` instructions first,
+  architecture and project structure moved to a closing *Development* section
+- Package metadata: `Development Status :: 4 - Beta`, keywords, and the
+  license declared only through the SPDX expression (PEP 639); the source
+  distribution now contains only the package, tests and top-level docs
+- Ruff configuration aligned with the author's other projects (99-column lines,
+  pycodestyle warnings enabled); GitHub Actions updated to `checkout@v7` and
+  `setup-uv@v10.3.0`, with Dependabot keeping them current
+
 ## [1.1.1] - 2026-10-15
 
 ### Changed

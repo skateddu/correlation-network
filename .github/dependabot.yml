@@ -1,0 +1,8 @@
+version: 2
+updates:
+  # Actions used in .github/workflows; setup-uv publishes no floating major
+  # tag, so its exact pin has to be bumped explicitly
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly

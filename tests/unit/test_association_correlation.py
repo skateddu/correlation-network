@@ -74,9 +74,7 @@ class TestInsufficientNumericColumns:
         [PearsonStrategy(), SpearmanStrategy(), KendallStrategy()],
         ids=["pearson", "spearman", "kendall"],
     )
-    def test_categorical_only_frame_raises(
-        self, strategy, categorical_dataframe: pd.DataFrame
-    ):
+    def test_categorical_only_frame_raises(self, strategy, categorical_dataframe: pd.DataFrame):
         with pytest.raises(InsufficientColumnsError, match="at least 2 numeric"):
             strategy.compute(categorical_dataframe)
 
@@ -85,9 +83,7 @@ class TestInsufficientNumericColumns:
             PearsonStrategy().compute(numeric_dataframe[["x"]])
         assert excinfo.value.found == ["x"]
 
-    def test_error_names_the_offending_method(
-        self, categorical_dataframe: pd.DataFrame
-    ):
+    def test_error_names_the_offending_method(self, categorical_dataframe: pd.DataFrame):
         with pytest.raises(InsufficientColumnsError) as excinfo:
             KendallStrategy().compute(categorical_dataframe)
         assert excinfo.value.method == "kendall"
@@ -99,9 +95,7 @@ class TestCorrelationMissingValues:
         [PearsonStrategy(), SpearmanStrategy(), KendallStrategy()],
         ids=["pearson", "spearman", "kendall"],
     )
-    def test_no_overlapping_rows_raises(
-        self, strategy, disjoint_numeric_dataframe: pd.DataFrame
-    ):
+    def test_no_overlapping_rows_raises(self, strategy, disjoint_numeric_dataframe: pd.DataFrame):
         # pandas would return NaN here, which thresholding turns into a silent
         # "no edge" instead of reporting an undefined association
         with pytest.raises(NoCompleteObservationsError) as excinfo:
@@ -114,9 +108,7 @@ class TestCorrelationMissingValues:
             {
                 "p": [1.0, 2.0, 3.0, np.nan, np.nan, np.nan],
                 "r": [1.0, 3.0, 2.0, 5.0, 4.0, 6.0],
-                "flag": pd.array(
-                    [None, None, None, True, False, True], dtype="boolean"
-                ),
+                "flag": pd.array([None, None, None, True, False, True], dtype="boolean"),
             }
         )
         with pytest.raises(NoCompleteObservationsError) as excinfo:

@@ -1,5 +1,7 @@
 """correlation-network: Build and analyze association networks from DataFrames."""
 
+from importlib.metadata import version
+
 from correlation_network._types import (
     AssociationMethod,
     BinningMethod,
@@ -26,6 +28,9 @@ from correlation_network.exceptions import (
 )
 from correlation_network.network import CorrelationNetwork
 from correlation_network.visualization import NetworkVisualizer
+
+# Read from the installed metadata so pyproject.toml stays the single source
+__version__ = version("correlation-network")
 
 __all__ = [
     "AssociationMethod",

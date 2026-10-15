@@ -93,9 +93,7 @@ class TestEdgeColouringModes:
 
 
 class TestCommunityColors:
-    def test_community_colors_assigns_one_color_per_node(
-        self, positive_graph: nx.Graph
-    ):
+    def test_community_colors_assigns_one_color_per_node(self, positive_graph: nx.Graph):
         viz = NetworkVisualizer(positive_graph)
         colors = viz._community_colors
         assert len(colors) == positive_graph.number_of_nodes()
@@ -139,17 +137,13 @@ class TestLayoutWeighting:
     ):
         # Kamada-Kawai reads weights as target distances, so strength must be
         # converted first or strong associations become the longest edges
-        pos = NetworkVisualizer(strong_and_weak_graph)._layout_positions(
-            layout="kamada_kawai"
-        )
+        pos = NetworkVisualizer(strong_and_weak_graph)._layout_positions(layout="kamada_kawai")
         strong = np.linalg.norm(pos["s1"] - pos["s2"])
         weak = np.linalg.norm(pos["w1"] - pos["w2"])
         assert strong < weak
 
     @pytest.mark.parametrize("layout", ["kamada_kawai", "spring", "spectral"])
-    def test_negative_weights_produce_finite_positions(
-        self, sample_graph: nx.Graph, layout: str
-    ):
+    def test_negative_weights_produce_finite_positions(self, sample_graph: nx.Graph, layout: str):
         pos = NetworkVisualizer(sample_graph)._layout_positions(layout=layout)
         assert all(np.isfinite(p).all() for p in pos.values())
 
