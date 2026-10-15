@@ -191,8 +191,7 @@ class NetworkVisualizer:
 
         if show_edge_labels:
             edge_labels = {
-                (u, v): round(d.get("weight", 0), 2)
-                for u, v, d in self.graph.edges(data=True)
+                (u, v): round(d.get("weight", 0), 2) for u, v, d in self.graph.edges(data=True)
             }
             nx.draw_networkx_edge_labels(
                 self.graph,
@@ -209,9 +208,7 @@ class NetworkVisualizer:
         fig.tight_layout()
         return fig
 
-    def save(
-        self, path: str | os.PathLike[str], *, dpi: int = 150, **plot_kwargs: Any
-    ) -> None:
+    def save(self, path: str | os.PathLike[str], *, dpi: int = 150, **plot_kwargs: Any) -> None:
         """Plot the graph and save it to a file.
 
         Parameters
@@ -374,9 +371,7 @@ class NetworkVisualizer:
                 framealpha=0.8,
             )
 
-    def _compute_node_sizes(
-        self, metric: CentralityMetric | None
-    ) -> list[float] | float:
+    def _compute_node_sizes(self, metric: CentralityMetric | None) -> list[float] | float:
         """Compute node sizes scaled by centrality.
 
         Raises
@@ -387,9 +382,7 @@ class NetworkVisualizer:
         if metric is None:
             return 300.0
 
-        check_option(
-            name="centrality_metric", value=metric, options=_CENTRALITY_METRICS
-        )
+        check_option(name="centrality_metric", value=metric, options=_CENTRALITY_METRICS)
         values = _CENTRALITY_METRICS[metric](self._centrality_analyzer)
 
         # Scale to a reasonable range [100, 1500]

@@ -1,7 +1,7 @@
 [project]
 name = "correlation-network"
 version = "1.1.1"
-description = "Build and analyze association networks from pandas DataFrames"
+description = "Build and analyze association networks from pandas DataFrames: correlations, Cramer's V, mutual information and PhiK, with centrality analysis and visualization"
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.10"
@@ -84,11 +84,11 @@ addopts = "-v --strict-markers"
 
 [tool.ruff]
 src = ["src"]
-line-length = 88
+line-length = 99
 target-version = "py310"
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "UP", "B", "SIM"]
+select = ["E", "F", "W", "I", "UP", "B", "SIM"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["correlation_network"]

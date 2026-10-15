@@ -113,9 +113,7 @@ class TestCorrelationNetworkFitTransform:
         graph = net.fit_transform(numeric_dataframe)
         assert isinstance(graph, nx.Graph)
 
-    def test_fit_transform_equivalent_to_fit_then_transform(
-        self, numeric_dataframe: pd.DataFrame
-    ):
+    def test_fit_transform_equivalent_to_fit_then_transform(self, numeric_dataframe: pd.DataFrame):
         net1 = CorrelationNetwork(threshold=0.3)
         graph1 = net1.fit_transform(numeric_dataframe)
 
@@ -155,9 +153,7 @@ class TestPreprocessing:
         assert isinstance(net.excluded_columns_, list)
         assert len(net.excluded_columns_) > 0
 
-    def test_cardinality_filter_disabled_with_none(
-        self, dataframe_with_id: pd.DataFrame
-    ):
+    def test_cardinality_filter_disabled_with_none(self, dataframe_with_id: pd.DataFrame):
         net = CorrelationNetwork(threshold=0.3, cardinality_threshold=None)
         net.fit(dataframe_with_id)
         # ID columns should still be in the matrix
@@ -165,9 +161,7 @@ class TestPreprocessing:
 
     def test_empty_dataframe_raises(self):
         net = CorrelationNetwork()
-        empty_df = pd.DataFrame(
-            {"x": pd.Series(dtype=float), "y": pd.Series(dtype=float)}
-        )
+        empty_df = pd.DataFrame({"x": pd.Series(dtype=float), "y": pd.Series(dtype=float)})
         with pytest.raises(ValueError, match="empty DataFrame"):
             net.fit(empty_df)
 
@@ -191,9 +185,7 @@ class TestPreprocessing:
         net = CorrelationNetwork(threshold=0.3).fit(df)
         assert net.excluded_columns_ == []
 
-    def test_shuffled_consecutive_integer_id_is_excluded(
-        self, numeric_dataframe: pd.DataFrame
-    ):
+    def test_shuffled_consecutive_integer_id_is_excluded(self, numeric_dataframe: pd.DataFrame):
         df = numeric_dataframe.copy()
         rng = np.random.default_rng(0)
         df["customer_id"] = rng.permutation(np.arange(1000, 1000 + len(df)))
@@ -229,9 +221,7 @@ class TestColumnsIgnoredByStrategy:
         with pytest.warns(UserWarning, match="not used by the strategy.*label"):
             net.fit(df)
 
-    def test_unsupported_column_is_recorded_as_excluded(
-        self, numeric_dataframe: pd.DataFrame
-    ):
+    def test_unsupported_column_is_recorded_as_excluded(self, numeric_dataframe: pd.DataFrame):
         df = numeric_dataframe.assign(label=["a", "b"] * 100)
         net = CorrelationNetwork(method="pearson", threshold=0.3)
         with pytest.warns(UserWarning):
@@ -300,9 +290,7 @@ class TestFromMatrix:
             CorrelationNetwork.from_matrix(df)
 
     @pytest.mark.parametrize("threshold", [0.0, 1.0, -0.2], ids=["zero", "one", "neg"])
-    def test_rejects_threshold_out_of_range(
-        self, sample_matrix: pd.DataFrame, threshold: float
-    ):
+    def test_rejects_threshold_out_of_range(self, sample_matrix: pd.DataFrame, threshold: float):
         with pytest.raises(ValueError, match="threshold"):
             CorrelationNetwork.from_matrix(sample_matrix, threshold=threshold)
 
@@ -314,14 +302,10 @@ class TestFromMatrix:
         net = CorrelationNetwork.from_matrix(sample_matrix)
         assert net.excluded_columns_ == []
 
-    def test_reapplying_threshold_when_none_is_a_noop(
-        self, sample_matrix: pd.DataFrame
-    ):
+    def test_reapplying_threshold_when_none_is_a_noop(self, sample_matrix: pd.DataFrame):
         # a None threshold must not blow up on the unary minus
         net = CorrelationNetwork.from_matrix(sample_matrix)
-        pd.testing.assert_frame_equal(
-            net._apply_threshold(sample_matrix), sample_matrix
-        )
+        pd.testing.assert_frame_equal(net._apply_threshold(sample_matrix), sample_matrix)
 
     def test_value_equal_to_threshold_is_kept(self):
         data = np.array([[1.0, 0.5], [0.5, 1.0]])
@@ -377,9 +361,7 @@ class TestPolarsSupport:
         net_pl = CorrelationNetwork(threshold=0.3)
         net_pl.fit(polars_df)
 
-        pd.testing.assert_frame_equal(
-            net_pd.association_matrix_, net_pl.association_matrix_
-        )
+        pd.testing.assert_frame_equal(net_pd.association_matrix_, net_pl.association_matrix_)
 
     def test_rejects_unsupported_type(self):
         with pytest.raises(TypeError, match="Expected a pandas or Polars"):
@@ -388,9 +370,7 @@ class TestPolarsSupport:
 
     def test_from_matrix_accepts_polars(self):
         # Polars has no row index: rows are labelled by the column order
-        matrix = pl.DataFrame(
-            {"a": [1.0, 0.8, 0.2], "b": [0.8, 1.0, 0.4], "c": [0.2, 0.4, 1.0]}
-        )
+        matrix = pl.DataFrame({"a": [1.0, 0.8, 0.2], "b": [0.8, 1.0, 0.4], "c": [0.2, 0.4, 1.0]})
         net = CorrelationNetwork.from_matrix(matrix, threshold=0.5)
         assert list(net.adjacency_matrix_.index) == ["a", "b", "c"]
         assert set(net.transform().edges()) == {("a", "b")}

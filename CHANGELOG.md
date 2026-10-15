@@ -24,6 +24,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Package metadata: `Development Status :: 4 - Beta`, keywords, and the
   license declared only through the SPDX expression (PEP 639); the source
   distribution now contains only the package, tests and top-level docs
+- Ruff configuration aligned with the author's other projects (99-column lines,
+  pycodestyle warnings enabled); GitHub Actions updated to `checkout@v7` and
+  `setup-uv@v10.3.0`, with Dependabot keeping them current
 
 ## [1.1.1] - 2026-10-15
 

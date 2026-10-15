@@ -112,9 +112,7 @@ def _to_pandas(dataframe: Any) -> pd.DataFrame:
     if isinstance(dataframe, pl.DataFrame):
         return dataframe.to_pandas()
 
-    raise TypeError(
-        f"Expected a pandas or Polars DataFrame, got {type(dataframe).__name__}"
-    )
+    raise TypeError(f"Expected a pandas or Polars DataFrame, got {type(dataframe).__name__}")
 
 
 class CorrelationNetwork:
@@ -158,13 +156,9 @@ class CorrelationNetwork:
         cardinality_threshold: float | None = _DEFAULT_CARDINALITY_THRESHOLD,
     ) -> None:
         if method not in AVAILABLE_METHODS:
-            raise ValueError(
-                f"Unknown method {method!r}. Available options: {AVAILABLE_METHODS}"
-            )
+            raise ValueError(f"Unknown method {method!r}. Available options: {AVAILABLE_METHODS}")
         if not (0 < threshold < 1):
-            raise ValueError(
-                f"The threshold must be in the range (0, 1), got {threshold}."
-            )
+            raise ValueError(f"The threshold must be in the range (0, 1), got {threshold}.")
         # Widened beyond the constructor types: from_matrix sets the
         # "precomputed" sentinel method and may leave threshold as None.
         self.method: str = method
@@ -199,9 +193,7 @@ class CorrelationNetwork:
         dataframe = self._preprocess(dataframe)
 
         strategy = (
-            self.strategy
-            if self.strategy is not None
-            else _STRATEGY_REGISTRY[self.method]()
+            self.strategy if self.strategy is not None else _STRATEGY_REGISTRY[self.method]()
         )
         self.association_matrix_ = strategy.compute(dataframe)
         self._record_unused_columns(input_columns=dataframe.columns)
@@ -257,9 +249,7 @@ class CorrelationNetwork:
             raise ValueError("Matrix must be symmetric")
 
         if threshold is not None and not (0 < threshold < 1):
-            raise ValueError(
-                f"The threshold must be in the range (0, 1), got {threshold}."
-            )
+            raise ValueError(f"The threshold must be in the range (0, 1), got {threshold}.")
 
         instance = cls.__new__(cls)
         instance.method = PRECOMPUTED_METHOD
@@ -351,9 +341,7 @@ class CorrelationNetwork:
                 dataframe=dataframe, threshold=self.cardinality_threshold
             )
             if high_cardinality_cols:
-                _warn_user(
-                    f"High-cardinality columns excluded: {high_cardinality_cols}"
-                )
+                _warn_user(f"High-cardinality columns excluded: {high_cardinality_cols}")
                 excluded.extend(high_cardinality_cols)
                 dataframe = dataframe.drop(columns=high_cardinality_cols)
 
@@ -361,16 +349,13 @@ class CorrelationNetwork:
 
         if len(dataframe.columns) < 2:
             raise ValueError(
-                "Fewer than 2 columns remain after preprocessing. "
-                f"Excluded columns: {excluded}"
+                f"Fewer than 2 columns remain after preprocessing. Excluded columns: {excluded}"
             )
 
         return dataframe
 
     @staticmethod
-    def _high_cardinality_columns(
-        dataframe: pd.DataFrame, threshold: float
-    ) -> list[str]:
+    def _high_cardinality_columns(dataframe: pd.DataFrame, threshold: float) -> list[str]:
         """Return index-like columns whose cardinality ratio is too high.
 
         Continuous floats are never checked: they are naturally near-unique and

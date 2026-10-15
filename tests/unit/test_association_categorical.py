@@ -189,9 +189,7 @@ class TestCramersVTwoByTwo:
 
 
 class TestCramersVMissingValues:
-    def test_no_overlapping_rows_raises(
-        self, disjoint_categorical_dataframe: pd.DataFrame
-    ):
+    def test_no_overlapping_rows_raises(self, disjoint_categorical_dataframe: pd.DataFrame):
         with pytest.raises(NoCompleteObservationsError) as excinfo:
             CramersVStrategy().compute(disjoint_categorical_dataframe)
         assert set(excinfo.value.columns) == {"p", "q"}
