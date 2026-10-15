@@ -25,7 +25,7 @@ correlation-network/
 │   ├── network.py               # CorrelationNetwork (main entry point)
 │   ├── centrality.py            # CentralityAnalyzer (5 metrics + summary)
 │   ├── visualization.py         # NetworkVisualizer (5 layouts, colormap, community colors)
-│   ├── exceptions.py            # NotFittedError, InsufficientColumnsError, NoCompleteObservationsError
+│   ├── exceptions.py            # CorrelationNetworkError base + NotFittedError, InsufficientColumnsError, NoCompleteObservationsError
 │   ├── py.typed                 # PEP 561 marker: ships inline type information
 │   ├── _types.py                # Literal type aliases (AssociationMethod, CentralityMetric, LayoutAlgorithm, CorrelationMethod)
 │   ├── _validation.py           # check_is_fitted guard
@@ -236,6 +236,12 @@ except NoCompleteObservationsError as err:
 > samples per bin the estimate is biased upward: on 200 rows, two *independent*
 > columns score ≈0.10 at `n_bins=10` but ≈0.50 at `n_bins=50`. Raise `n_bins`
 > only when you have the rows to support it, and set `threshold` accordingly.
+
+### Error handling
+
+All library errors derive from `CorrelationNetworkError`, so a single `except`
+catches any of them. Each one also keeps its built-in base (`ValueError`, and
+`AttributeError` for `NotFittedError`), so existing handlers keep working.
 
 ### Auto mode
 

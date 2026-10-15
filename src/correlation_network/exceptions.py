@@ -1,7 +1,16 @@
 """Custom exception hierarchy for correlation-network."""
 
 
-class NotFittedError(ValueError, AttributeError):
+class CorrelationNetworkError(Exception):
+    """Base class for all errors raised by correlation-network.
+
+    Every concrete error also inherits from the built-in it historically
+    derived from (``ValueError``, ``AttributeError``), so existing handlers
+    keep working.
+    """
+
+
+class NotFittedError(CorrelationNetworkError, ValueError, AttributeError):
     """Raised when an estimator is used before fitting.
 
     Inherits from both ValueError and AttributeError for compatibility
@@ -9,7 +18,7 @@ class NotFittedError(ValueError, AttributeError):
     """
 
 
-class NoCompleteObservationsError(ValueError):
+class NoCompleteObservationsError(CorrelationNetworkError, ValueError):
     """Raised when a column pair shares no rows where both values are present.
 
     Attributes
@@ -28,7 +37,7 @@ class NoCompleteObservationsError(ValueError):
         )
 
 
-class InsufficientColumnsError(ValueError):
+class InsufficientColumnsError(CorrelationNetworkError, ValueError):
     """Raised when a strategy receives too few columns of the type it needs.
 
     Attributes
@@ -48,5 +57,5 @@ class InsufficientColumnsError(ValueError):
         super().__init__(
             f"{method} requires {required}, but the DataFrame provides "
             f"{len(found)}: {found}. Pick a method suited to these column "
-            f"types, or pass `columns=` to select compatible ones."
+            f"types, or select only compatible columns."
         )

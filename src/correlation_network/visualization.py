@@ -1,6 +1,7 @@
 """Network visualization utilities."""
 
 import functools
+import os
 from itertools import compress
 from typing import Any, get_args
 
@@ -197,12 +198,14 @@ class NetworkVisualizer:
         fig.tight_layout()
         return fig
 
-    def save(self, path: str, *, dpi: int = 150, **plot_kwargs) -> None:
+    def save(
+        self, path: str | os.PathLike[str], *, dpi: int = 150, **plot_kwargs: Any
+    ) -> None:
         """Plot the graph and save it to a file.
 
         Parameters
         ----------
-        path : str
+        path : str | os.PathLike[str]
             Output file path (e.g. ``"network.png"``). Format is inferred
             from the extension.
         dpi : int

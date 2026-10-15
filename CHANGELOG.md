@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `CorrelationNetworkError`, a common base class for every library error;
+  each error keeps its previous built-in base (`ValueError`, `AttributeError`)
+
+### Changed
+
+- `AutoAssociationStrategy` parameters are typed as `AssociationStrategy` and
+  default only when `None` is passed; `NetworkVisualizer.save()` accepts
+  `os.PathLike` paths
+- `InsufficientColumnsError` message no longer suggests `columns=`, which only
+  exists on `CorrelationNetwork.fit`
+
 ### Fixed
 
 - Kamada-Kawai layout (the default) now converts association strength to

@@ -3,6 +3,7 @@
 import numpy as np
 import pandas as pd
 
+from correlation_network.association._base import AssociationStrategy
 from correlation_network.association._categorical import (
     CorrelationRatioStrategy,
     CramersVStrategy,
@@ -36,23 +37,31 @@ class AutoAssociationStrategy:
 
     Parameters
     ----------
-    numeric_strategy : object | None
+    numeric_strategy : AssociationStrategy | None
         Strategy for numeric-numeric pairs. Defaults to SpearmanStrategy.
-    categorical_strategy : object | None
+    categorical_strategy : AssociationStrategy | None
         Strategy for categorical-categorical pairs. Defaults to CramersVStrategy.
-    mixed_strategy : object | None
+    mixed_strategy : AssociationStrategy | None
         Strategy for categorical-numeric pairs. Defaults to CorrelationRatioStrategy.
     """
 
     def __init__(
         self,
-        numeric_strategy: object | None = None,
-        categorical_strategy: object | None = None,
-        mixed_strategy: object | None = None,
+        numeric_strategy: AssociationStrategy | None = None,
+        categorical_strategy: AssociationStrategy | None = None,
+        mixed_strategy: AssociationStrategy | None = None,
     ) -> None:
-        self._numeric = numeric_strategy or SpearmanStrategy()
-        self._categorical = categorical_strategy or CramersVStrategy()
-        self._mixed = mixed_strategy or CorrelationRatioStrategy()
+        self._numeric = (
+            numeric_strategy if numeric_strategy is not None else SpearmanStrategy()
+        )
+        self._categorical = (
+            categorical_strategy
+            if categorical_strategy is not None
+            else CramersVStrategy()
+        )
+        self._mixed = (
+            mixed_strategy if mixed_strategy is not None else CorrelationRatioStrategy()
+        )
 
     def compute(self, dataframe: pd.DataFrame) -> pd.DataFrame:
         """Compute a combined association matrix using type-aware dispatch.

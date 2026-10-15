@@ -30,7 +30,7 @@ from correlation_network.association._universal import (
     PhiKStrategy,
 )
 
-_STRATEGY_REGISTRY: dict[str, type] = {
+_STRATEGY_REGISTRY: dict[str, type[AssociationStrategy]] = {
     "pearson": PearsonStrategy,
     "spearman": SpearmanStrategy,
     "kendall": KendallStrategy,
