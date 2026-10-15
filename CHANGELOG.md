@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-10-15
+
 ### Changed
 
 - The pairwise-overlap check run by Pearson, Spearman, Kendall and PhiK is
@@ -128,6 +130,7 @@ Initial release.
 - GitHub Actions CI: lint, format, and a test matrix over Python 3.10–3.13,
   gated at 80% coverage
 
-[Unreleased]: https://github.com/skateddu/correlation-network/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/skateddu/correlation-network/compare/v1.1.1...HEAD
+[1.1.1]: https://github.com/skateddu/correlation-network/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/skateddu/correlation-network/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/skateddu/correlation-network/releases/tag/v1.0.0
