@@ -53,7 +53,9 @@ class PhiKStrategy:
 
         # phik reports pairs without overlapping rows as NaN instead of raising
         check_pairwise_overlap(dataframe)
-        return dataframe.phik_matrix()
+        # phik registers this DataFrame method at import time, which the
+        # pandas stubs cannot know about
+        return dataframe.phik_matrix()  # type: ignore[operator]
 
 
 class MutualInformationStrategy:
@@ -157,4 +159,4 @@ class MutualInformationStrategy:
 
         h_xy = entropy(joint_prob.ravel())
         mi = h_x + h_y - h_xy
-        return mi / np.sqrt(h_x * h_y)
+        return float(mi / np.sqrt(h_x * h_y))

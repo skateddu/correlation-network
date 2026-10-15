@@ -10,6 +10,7 @@ import networkx as nx
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
+from matplotlib.axes import Axes
 from matplotlib.colors import Normalize, TwoSlopeNorm
 from matplotlib.figure import Figure
 from matplotlib.lines import Line2D
@@ -249,7 +250,7 @@ class NetworkVisualizer:
         alphas: np.ndarray,
         cmap_name: str,
         fig: Figure,
-        ax: plt.Axes,
+        ax: Axes,
     ) -> None:
         """Draw edges colored by a continuous colormap with a colorbar."""
         cmap = plt.get_cmap(cmap_name)
@@ -296,7 +297,7 @@ class NetworkVisualizer:
         alphas: np.ndarray,
         positive_color: str,
         negative_color: str,
-        ax: plt.Axes,
+        ax: Axes,
     ) -> None:
         """Draw edges with two fixed colors and per-edge alpha."""
         positive_mask = weights >= 0
@@ -336,7 +337,7 @@ class NetworkVisualizer:
         positive_color: str,
         negative_color: str,
         font_size: int,
-        ax: plt.Axes,
+        ax: Axes,
     ) -> None:
         """Add a positive/negative edge legend to the axes."""
         has_positive = bool((weights >= 0).any())
@@ -393,7 +394,7 @@ class NetworkVisualizer:
 
         # Scale to a reasonable range [100, 1500]
         nodes = list(self.graph.nodes())
-        raw = values.reindex(nodes).fillna(0).values
+        raw = values.reindex(nodes).fillna(0).to_numpy(dtype=float)
         if raw.max() == raw.min():
             return [300.0] * len(nodes)
         normalized = (raw - raw.min()) / (raw.max() - raw.min())
