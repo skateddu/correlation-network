@@ -201,6 +201,22 @@ class TestPreprocessing:
         assert "customer_id" in net.excluded_columns_
 
 
+class TestWarningLocation:
+    """Preprocessing warnings must point at the user's call, not library code."""
+
+    def test_fit_warning_points_at_caller(self, dataframe_with_datetime):
+        net = CorrelationNetwork(threshold=0.3)
+        with pytest.warns(UserWarning, match="Datetime") as record:
+            net.fit(dataframe_with_datetime)
+        assert record[0].filename == __file__
+
+    def test_fit_transform_warning_points_at_caller(self, dataframe_with_datetime):
+        net = CorrelationNetwork(threshold=0.3)
+        with pytest.warns(UserWarning, match="Datetime") as record:
+            net.fit_transform(dataframe_with_datetime)
+        assert record[0].filename == __file__
+
+
 class TestColumnsIgnoredByStrategy:
     def test_unsupported_column_triggers_warning(self, numeric_dataframe: pd.DataFrame):
         df = numeric_dataframe.assign(label=["a", "b"] * 100)

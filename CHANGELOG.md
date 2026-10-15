@@ -53,6 +53,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `NetworkVisualizer.plot()` raises `ValueError` for an unknown `layout` or
   `centrality_metric` (previously `KeyError`, or any analyzer attribute was
   accepted as a metric)
+- Preprocessing warnings point at the user's call for both `fit()` and
+  `fit_transform()`; a fixed `stacklevel` attributed them to library code
+  when called through `fit_transform()`
 
 ## [1.0.0] - 2026-08-13
 

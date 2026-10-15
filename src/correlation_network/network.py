@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import os
+import sys
 import warnings
 from typing import TYPE_CHECKING, Any
 
@@ -48,6 +50,24 @@ AVAILABLE_METHODS = tuple(_STRATEGY_REGISTRY.keys())
 PRECOMPUTED_METHOD = "precomputed"
 
 _DEFAULT_CARDINALITY_THRESHOLD = 0.95
+
+
+_PACKAGE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+
+def _warn_user(message: str) -> None:
+    """Emit a UserWarning attributed to the first caller outside this package.
+
+    A fixed ``stacklevel`` breaks as soon as the warning is reached through
+    a different call path (``fit`` vs ``fit_transform``), pointing users at
+    library internals instead of their own code.
+    """
+    frame = sys._getframe(1)
+    stacklevel = 2
+    while frame is not None and frame.f_code.co_filename.startswith(_PACKAGE_DIR):
+        frame = frame.f_back
+        stacklevel += 1
+    warnings.warn(message, UserWarning, stacklevel=stacklevel)
 
 
 def _is_consecutive_sequence(series: pd.Series) -> bool:
@@ -318,21 +338,15 @@ class CorrelationNetwork:
             include=["datetime64", "datetimetz"]
         ).columns.tolist()
         if datetime_cols:
-            warnings.warn(
-                f"Datetime columns excluded: {datetime_cols}",
-                UserWarning,
-                stacklevel=3,
-            )
+            _warn_user(f"Datetime columns excluded: {datetime_cols}")
             excluded.extend(datetime_cols)
             dataframe = dataframe.drop(columns=datetime_cols)
 
         if self.cardinality_threshold is not None:
             high_cardinality_cols = self._high_cardinality_columns(dataframe)
             if high_cardinality_cols:
-                warnings.warn(
-                    f"High-cardinality columns excluded: {high_cardinality_cols}",
-                    UserWarning,
-                    stacklevel=3,
+                _warn_user(
+                    f"High-cardinality columns excluded: {high_cardinality_cols}"
                 )
                 excluded.extend(high_cardinality_cols)
                 dataframe = dataframe.drop(columns=high_cardinality_cols)
@@ -375,11 +389,7 @@ class CorrelationNetwork:
         computed = set(self.association_matrix_.columns)
         unused = [col for col in input_columns if col not in computed]
         if unused:
-            warnings.warn(
-                f"Columns not used by the strategy (unsupported type): {unused}",
-                UserWarning,
-                stacklevel=3,
-            )
+            _warn_user(f"Columns not used by the strategy (unsupported type): {unused}")
             self.excluded_columns_.extend(unused)
 
     def _apply_threshold(self, matrix: pd.DataFrame) -> pd.DataFrame:
