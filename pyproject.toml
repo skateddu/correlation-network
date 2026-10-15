@@ -6,7 +6,7 @@ readme = "README.md"
 license = "MIT"
 requires-python = ">=3.10"
 authors = [
-    { name = "Andrea Cadeddu", email = "andrea.cadeddu@linkalab.it" },
+    { name = "Andrea Cadeddu", email = "cadeddu7@gmail.com" },
 ]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
