@@ -1,5 +1,7 @@
 """Tests for CorrelationNetwork."""
 
+import sys
+
 import networkx as nx
 import numpy as np
 import pandas as pd
@@ -217,6 +219,14 @@ class TestWarningLocation:
         assert record[0].filename == __file__
 
 
+class TestPolarsMissing:
+    def test_non_pandas_input_without_polars_raises_type_error(self, monkeypatch):
+        # a None entry in sys.modules makes `import polars` raise ImportError
+        monkeypatch.setitem(sys.modules, "polars", None)
+        with pytest.raises(TypeError, match="Install polars"):
+            CorrelationNetwork().fit({"not": "a dataframe"})
+
+
 class TestColumnsIgnoredByStrategy:
     def test_unsupported_column_triggers_warning(self, numeric_dataframe: pd.DataFrame):
         df = numeric_dataframe.assign(label=["a", "b"] * 100)
@@ -293,6 +303,13 @@ class TestFromMatrix:
         df = pd.DataFrame(data=data, index=["a", "b"], columns=["a", "b"])
         with pytest.raises(ValueError, match="symmetric"):
             CorrelationNetwork.from_matrix(df)
+
+    @pytest.mark.parametrize("threshold", [0.0, 1.0, -0.2], ids=["zero", "one", "neg"])
+    def test_rejects_threshold_out_of_range(
+        self, sample_matrix: pd.DataFrame, threshold: float
+    ):
+        with pytest.raises(ValueError, match="threshold"):
+            CorrelationNetwork.from_matrix(sample_matrix, threshold=threshold)
 
     def test_repr_shows_precomputed(self, sample_matrix: pd.DataFrame):
         net = CorrelationNetwork.from_matrix(sample_matrix, threshold=0.3)
