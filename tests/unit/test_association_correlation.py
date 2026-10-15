@@ -94,30 +94,38 @@ class TestInsufficientNumericColumns:
 
 
 class TestCorrelationMissingValues:
-    @pytest.fixture()
-    def disjoint_dataframe(self) -> pd.DataFrame:
-        """'p' and 'q' are never present on the same row; 'r' is complete."""
-        return pd.DataFrame(
-            {
-                "p": [1.0, 2.0, 3.0, np.nan, np.nan, np.nan],
-                "q": [np.nan, np.nan, np.nan, 1.0, 2.0, 3.0],
-                "r": [1.0, 3.0, 2.0, 5.0, 4.0, 6.0],
-            }
-        )
-
     @pytest.mark.parametrize(
         "strategy",
         [PearsonStrategy(), SpearmanStrategy(), KendallStrategy()],
         ids=["pearson", "spearman", "kendall"],
     )
     def test_no_overlapping_rows_raises(
-        self, strategy, disjoint_dataframe: pd.DataFrame
+        self, strategy, disjoint_numeric_dataframe: pd.DataFrame
     ):
         # pandas would return NaN here, which thresholding turns into a silent
         # "no edge" instead of reporting an undefined association
         with pytest.raises(NoCompleteObservationsError) as excinfo:
-            strategy.compute(disjoint_dataframe)
+            strategy.compute(disjoint_numeric_dataframe)
         assert set(excinfo.value.columns) == {"p", "q"}
+
+    def test_bool_column_without_overlap_raises(self):
+        # pandas correlates bool columns too, so they need the same check
+        df = pd.DataFrame(
+            {
+                "p": [1.0, 2.0, 3.0, np.nan, np.nan, np.nan],
+                "r": [1.0, 3.0, 2.0, 5.0, 4.0, 6.0],
+                "flag": pd.array(
+                    [None, None, None, True, False, True], dtype="boolean"
+                ),
+            }
+        )
+        with pytest.raises(NoCompleteObservationsError) as excinfo:
+            PearsonStrategy().compute(df)
+        assert set(excinfo.value.columns) == {"p", "flag"}
+
+    def test_complete_frame_is_computed(self, numeric_dataframe: pd.DataFrame):
+        result = PearsonStrategy().compute(numeric_dataframe)
+        assert not result.isna().any().any()
 
     def test_partial_overlap_is_computed(self):
         df = pd.DataFrame(

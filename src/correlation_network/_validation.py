@@ -84,7 +84,12 @@ def check_pairwise_overlap(dataframe: pd.DataFrame) -> None:
     NoCompleteObservationsError
         For the first column pair with no rows where both values are present.
     """
-    present = dataframe.notna().to_numpy(dtype=np.int64)
+    present = dataframe.notna().to_numpy()
+    if len(present) and present.all():
+        return
+    # Float matmul goes through BLAS; integer matmul does not and takes
+    # seconds on large frames. Counts stay exact far beyond realistic sizes.
+    present = present.astype(np.float64)
     overlap = present.T @ present
     rows, cols = np.nonzero(np.triu(overlap == 0, k=1))
     if rows.size:

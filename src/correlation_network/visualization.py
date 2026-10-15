@@ -2,11 +2,13 @@
 
 import functools
 import os
+from collections.abc import Callable
 from itertools import compress
-from typing import Any, get_args
+from typing import Any
 
 import networkx as nx
 import numpy as np
+import pandas as pd
 from matplotlib import pyplot as plt
 from matplotlib.colors import Normalize, TwoSlopeNorm
 from matplotlib.figure import Figure
@@ -17,12 +19,27 @@ from correlation_network._types import CentralityMetric, LayoutAlgorithm
 from correlation_network._validation import check_option
 from correlation_network.centrality import CentralityAnalyzer
 
-_LAYOUT_FUNCTIONS = {
-    "kamada_kawai": nx.kamada_kawai_layout,
-    "spring": nx.spring_layout,
-    "circular": nx.circular_layout,
-    "shell": nx.shell_layout,
-    "spectral": nx.spectral_layout,
+# Each layout is paired with the weight transform it needs. Kamada-Kawai reads
+# weights as target *distances*, so association strength becomes
+# ``1 - |weight|``; raw values would draw the strongest associations as the
+# longest edges. Spring and spectral read weights as attraction and only need
+# them non-negative. Circular and shell ignore weights.
+_LAYOUTS: dict[
+    str, tuple[Callable[..., dict[Any, np.ndarray]], Callable[[nx.Graph], nx.Graph]]
+] = {
+    "kamada_kawai": (nx.kamada_kawai_layout, distance_graph),
+    "spring": (nx.spring_layout, abs_weight_graph),
+    "circular": (nx.circular_layout, lambda graph: graph),
+    "shell": (nx.shell_layout, lambda graph: graph),
+    "spectral": (nx.spectral_layout, abs_weight_graph),
+}
+
+_CENTRALITY_METRICS: dict[str, Callable[[CentralityAnalyzer], pd.Series]] = {
+    "degree": CentralityAnalyzer.degree,
+    "strength": CentralityAnalyzer.strength,
+    "betweenness": CentralityAnalyzer.betweenness,
+    "eigenvector": CentralityAnalyzer.eigenvector,
+    "closeness": CentralityAnalyzer.closeness,
 }
 
 
@@ -109,18 +126,11 @@ class NetworkVisualizer:
         matplotlib.figure.Figure
             The figure object (not shown automatically).
         """
-        check_option(name="layout", value=layout, options=_LAYOUT_FUNCTIONS)
-        if centrality_metric is not None:
-            check_option(
-                name="centrality_metric",
-                value=centrality_metric,
-                options=get_args(CentralityMetric),
-            )
+        node_sizes = self._compute_node_sizes(metric=centrality_metric)
         pos = self._layout_positions(layout=layout)
 
         fig, ax = plt.subplots(figsize=figsize, dpi=dpi)
 
-        node_sizes = self._compute_node_sizes(metric=centrality_metric)
         resolved_node_color = self._community_colors if community_colors else node_color
 
         nx.draw_networkx_nodes(
@@ -220,22 +230,14 @@ class NetworkVisualizer:
     def _layout_positions(self, layout: LayoutAlgorithm) -> dict[Any, np.ndarray]:
         """Compute node positions, adapting weights to what the layout expects.
 
-        Kamada-Kawai reads weights as target *distances*, so association
-        strength is converted with ``1 - |weight|``; raw values would draw the
-        strongest associations as the longest edges. Spring and spectral read
-        weights as attraction and only need them non-negative.
+        Raises
+        ------
+        ValueError
+            If ``layout`` is not a supported algorithm.
         """
-        has_negative = any(
-            d.get("weight", 0) < 0 for _, _, d in self.graph.edges(data=True)
-        )
-        match layout:
-            case "kamada_kawai":
-                layout_graph = distance_graph(self.graph)
-            case "spring" | "spectral" if has_negative:
-                layout_graph = abs_weight_graph(self.graph)
-            case _:
-                layout_graph = self.graph
-        return _LAYOUT_FUNCTIONS[layout](layout_graph)
+        check_option(name="layout", value=layout, options=_LAYOUTS)
+        layout_fn, prepare = _LAYOUTS[layout]
+        return layout_fn(prepare(self.graph))
 
     def _draw_edges_cmap(
         self,
@@ -374,12 +376,20 @@ class NetworkVisualizer:
     def _compute_node_sizes(
         self, metric: CentralityMetric | None
     ) -> list[float] | float:
-        """Compute node sizes scaled by centrality."""
+        """Compute node sizes scaled by centrality.
+
+        Raises
+        ------
+        ValueError
+            If ``metric`` is not a supported centrality measure.
+        """
         if metric is None:
             return 300.0
 
-        centrality_fn = getattr(self._centrality_analyzer, metric)
-        values = centrality_fn()
+        check_option(
+            name="centrality_metric", value=metric, options=_CENTRALITY_METRICS
+        )
+        values = _CENTRALITY_METRICS[metric](self._centrality_analyzer)
 
         # Scale to a reasonable range [100, 1500]
         nodes = list(self.graph.nodes())

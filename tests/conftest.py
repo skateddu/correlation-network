@@ -72,3 +72,27 @@ def dataframe_with_datetime(numeric_dataframe: pd.DataFrame) -> pd.DataFrame:
     df = numeric_dataframe.copy()
     df["timestamp"] = pd.date_range(start="2024-01-01", periods=n, freq="h")
     return df
+
+
+@pytest.fixture()
+def disjoint_numeric_dataframe() -> pd.DataFrame:
+    """'p' and 'q' are never present on the same row; 'r' is complete."""
+    return pd.DataFrame(
+        {
+            "p": [1.0, 2.0, 3.0, np.nan, np.nan, np.nan],
+            "q": [np.nan, np.nan, np.nan, 1.0, 2.0, 3.0],
+            "r": [1.0, 3.0, 2.0, 5.0, 4.0, 6.0],
+        }
+    )
+
+
+@pytest.fixture()
+def disjoint_categorical_dataframe() -> pd.DataFrame:
+    """'p' and 'q' are never present on the same row; 'r' is complete."""
+    return pd.DataFrame(
+        {
+            "p": ["a", "b", "a", None, None, None],
+            "q": [None, None, None, "a", "b", "b"],
+            "r": list("ababab"),
+        }
+    )

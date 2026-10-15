@@ -1,6 +1,5 @@
 """Tests for the auto-detection association strategy."""
 
-import numpy as np
 import pandas as pd
 import pytest
 
@@ -47,14 +46,10 @@ class TestAutoAssociationStrategy:
 
 
 class TestAutoMissingValues:
-    def test_numeric_pair_without_overlap_raises(self):
-        df = pd.DataFrame(
-            {
-                "p": [1.0, 2.0, 3.0, np.nan, np.nan, np.nan],
-                "q": [np.nan, np.nan, np.nan, 1.0, 2.0, 3.0],
-                "cat": list("ababab"),
-            }
-        )
+    def test_numeric_pair_without_overlap_raises(
+        self, disjoint_numeric_dataframe: pd.DataFrame
+    ):
+        df = disjoint_numeric_dataframe.assign(cat=list("ababab"))
         with pytest.raises(NoCompleteObservationsError):
             AutoAssociationStrategy().compute(df)
 

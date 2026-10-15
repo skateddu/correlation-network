@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The pairwise-overlap check run by Pearson, Spearman, Kendall and PhiK is
+  orders of magnitude faster on large frames (about 18 s to 0.1 s at
+  100,000 rows by 200 columns) and is skipped when no value is missing
+
+### Fixed
+
+- Pearson, Spearman and Kendall also raise `NoCompleteObservationsError` for
+  bool columns, which pandas correlates but the overlap check used to skip
+
 ## [1.1.0] - 2026-10-15
 
 ### Added
