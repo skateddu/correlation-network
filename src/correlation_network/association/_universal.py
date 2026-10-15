@@ -1,12 +1,18 @@
 """Universal association strategies that work with any column type."""
 
 from itertools import combinations
+from typing import get_args
 
 import numpy as np
 import pandas as pd
 from scipy.stats import entropy
 
-from correlation_network._validation import check_pairwise_overlap, complete_pair
+from correlation_network._types import BinningMethod
+from correlation_network._validation import (
+    check_option,
+    check_pairwise_overlap,
+    complete_pair,
+)
 from correlation_network.exceptions import InsufficientColumnsError
 
 
@@ -53,10 +59,27 @@ class MutualInformationStrategy:
     """Normalized mutual information for any column type.
 
     Discretizes numeric columns before computing MI. Returns values in [0, 1].
+
+    Parameters
+    ----------
+    n_bins : int
+        Number of bins for numeric columns. Default ``10``.
+    binning : BinningMethod
+        ``"uniform"`` (default) splits the value range into equal-width bins;
+        ``"quantile"`` uses equal-frequency bins, which a few extreme values
+        cannot squeeze into a single bin. Duplicate quantile edges are merged,
+        so heavily repeated values may yield fewer than ``n_bins`` bins.
+
+    Raises
+    ------
+    ValueError
+        If ``binning`` is not a supported method.
     """
 
-    def __init__(self, n_bins: int = 10) -> None:
+    def __init__(self, n_bins: int = 10, binning: BinningMethod = "uniform") -> None:
+        check_option(name="binning", value=binning, options=get_args(BinningMethod))
         self.n_bins = n_bins
+        self.binning = binning
 
     def compute(self, dataframe: pd.DataFrame) -> pd.DataFrame:
         """Compute normalized mutual information matrix.
@@ -103,10 +126,16 @@ class MutualInformationStrategy:
         """Discretize numeric columns into bins."""
         result = dataframe.copy()
         numeric_cols = result.select_dtypes(include="number").columns
-        result[numeric_cols] = result[numeric_cols].apply(
-            pd.cut, bins=self.n_bins, labels=False
-        )
+        result[numeric_cols] = result[numeric_cols].apply(self._bin)
         return result
+
+    def _bin(self, column: pd.Series) -> pd.Series:
+        """Map one numeric column to integer bin labels."""
+        match self.binning:
+            case "quantile":
+                return pd.qcut(column, q=self.n_bins, labels=False, duplicates="drop")
+            case _:
+                return pd.cut(column, bins=self.n_bins, labels=False)
 
     @staticmethod
     def _normalized_mi(x: pd.Series, y: pd.Series) -> float:

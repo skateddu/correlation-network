@@ -2,6 +2,7 @@
 
 from correlation_network._types import (
     AssociationMethod,
+    BinningMethod,
     CentralityMetric,
     LayoutAlgorithm,
 )
@@ -18,6 +19,7 @@ from correlation_network.association import (
 )
 from correlation_network.centrality import CentralityAnalyzer
 from correlation_network.exceptions import (
+    CorrelationNetworkError,
     InsufficientColumnsError,
     NoCompleteObservationsError,
     NotFittedError,
@@ -29,9 +31,11 @@ __all__ = [
     "AssociationMethod",
     "AssociationStrategy",
     "AutoAssociationStrategy",
+    "BinningMethod",
     "CentralityAnalyzer",
     "CentralityMetric",
     "CorrelationNetwork",
+    "CorrelationNetworkError",
     "CorrelationRatioStrategy",
     "CramersVStrategy",
     "InsufficientColumnsError",

@@ -161,3 +161,17 @@ class TestPathMetricsUseAssociationAsCloseness:
         result = CentralityAnalyzer(graph).closeness()
         assert result.notna().all()
         assert (result > 0).all()
+
+
+class TestEigenvectorFallback:
+    def test_falls_back_to_numpy_solver_when_power_iteration_fails(
+        self, sample_graph: nx.Graph, monkeypatch
+    ):
+        expected = CentralityAnalyzer(sample_graph).eigenvector()
+
+        def fail(*args, **kwargs):
+            raise nx.PowerIterationFailedConvergence(100)
+
+        monkeypatch.setattr(nx, "eigenvector_centrality", fail)
+        result = CentralityAnalyzer(sample_graph).eigenvector()
+        pd.testing.assert_series_equal(result, expected, atol=1e-6)

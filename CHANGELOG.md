@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `CorrelationNetworkError`, a common base class for every library error;
+  each error keeps its previous built-in base (`ValueError`, `AttributeError`)
+- `MutualInformationStrategy(binning="quantile")` for equal-frequency bins,
+  robust to outliers that squeeze equal-width bins (default stays `"uniform"`)
+
+### Changed
+
+- `AutoAssociationStrategy` parameters are typed as `AssociationStrategy` and
+  default only when `None` is passed; `NetworkVisualizer.save()` accepts
+  `os.PathLike` paths
+- `InsufficientColumnsError` message no longer suggests `columns=`, which only
+  exists on `CorrelationNetwork.fit`
+
 ### Fixed
 
 - Kamada-Kawai layout (the default) now converts association strength to
@@ -38,6 +53,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `NetworkVisualizer.plot()` raises `ValueError` for an unknown `layout` or
   `centrality_metric` (previously `KeyError`, or any analyzer attribute was
   accepted as a metric)
+- Preprocessing warnings point at the user's call for both `fit()` and
+  `fit_transform()`; a fixed `stacklevel` attributed them to library code
+  when called through `fit_transform()`
 
 ## [1.0.0] - 2026-08-13
 
