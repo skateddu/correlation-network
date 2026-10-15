@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-10-15
+
 ### Added
 
 - `CorrelationNetworkError`, a common base class for every library error;
@@ -115,4 +117,6 @@ Initial release.
 - GitHub Actions CI: lint, format, and a test matrix over Python 3.10–3.13,
   gated at 80% coverage
 
+[Unreleased]: https://github.com/skateddu/correlation-network/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/skateddu/correlation-network/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/skateddu/correlation-network/releases/tag/v1.0.0

@@ -1,6 +1,6 @@
 [project]
 name = "correlation-network"
-version = "1.0.0"
+version = "1.1.0"
 description = "Build and analyze association networks from pandas DataFrames"
 readme = "README.md"
 license = "MIT"
