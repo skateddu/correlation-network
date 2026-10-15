@@ -27,7 +27,7 @@ correlation-network/
 │   ├── visualization.py         # NetworkVisualizer (5 layouts, colormap, community colors)
 │   ├── exceptions.py            # CorrelationNetworkError base + NotFittedError, InsufficientColumnsError, NoCompleteObservationsError
 │   ├── py.typed                 # PEP 561 marker: ships inline type information
-│   ├── _types.py                # Literal type aliases (AssociationMethod, CentralityMetric, LayoutAlgorithm, CorrelationMethod)
+│   ├── _types.py                # Literal type aliases (AssociationMethod, BinningMethod, CentralityMetric, LayoutAlgorithm, CorrelationMethod)
 │   ├── _validation.py           # check_is_fitted guard
 │   ├── _graph_utils.py          # Shared graph utilities (abs_weight_graph, distance_graph)
 │   └── association/
@@ -236,6 +236,16 @@ except NoCompleteObservationsError as err:
 > samples per bin the estimate is biased upward: on 200 rows, two *independent*
 > columns score ≈0.10 at `n_bins=10` but ≈0.50 at `n_bins=50`. Raise `n_bins`
 > only when you have the rows to support it, and set `threshold` accordingly.
+>
+> Bins are equal-width by default, so a single extreme outlier can squeeze
+> almost every row into one bin and hide a real relationship. Pass
+> `binning="quantile"` for equal-frequency bins on skewed or outlier-prone data:
+>
+> ```python
+> from correlation_network import MutualInformationStrategy
+>
+> net = CorrelationNetwork(strategy=MutualInformationStrategy(binning="quantile"))
+> ```
 
 ### Error handling
 

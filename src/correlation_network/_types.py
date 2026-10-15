@@ -30,3 +30,5 @@ LayoutAlgorithm = Literal[
     "shell",
     "spectral",
 ]
+
+BinningMethod = Literal["uniform", "quantile"]

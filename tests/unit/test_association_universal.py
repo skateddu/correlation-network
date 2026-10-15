@@ -116,3 +116,40 @@ class TestMutualInformationMissingValues:
         with pytest.raises(NoCompleteObservationsError) as excinfo:
             MutualInformationStrategy().compute(df)
         assert set(excinfo.value.columns) == {"p", "q"}
+
+
+class TestMutualInformationBinning:
+    @pytest.fixture()
+    def frame_with_outlier(self) -> pd.DataFrame:
+        """'y' is the decile of 'x'; one extreme outlier in 'x'."""
+        x = np.arange(100, dtype=float)
+        y = [f"d{int(v) // 10}" for v in x]
+        x[-1] = 1e6
+        return pd.DataFrame({"x": x, "y": y})
+
+    def test_quantile_binning_resists_outliers(self, frame_with_outlier):
+        # equal-width bins put 99 of 100 rows in the first bin, hiding the
+        # relationship; quantile bins keep it visible
+        uniform = MutualInformationStrategy(binning="uniform")
+        quantile = MutualInformationStrategy(binning="quantile")
+        uniform_mi = uniform.compute(frame_with_outlier).loc["x", "y"]
+        quantile_mi = quantile.compute(frame_with_outlier).loc["x", "y"]
+        assert uniform_mi < 0.2
+        assert quantile_mi > 0.9
+
+    def test_uniform_binning_is_the_default(self, frame_with_outlier):
+        default = MutualInformationStrategy().compute(frame_with_outlier)
+        uniform = MutualInformationStrategy(binning="uniform").compute(
+            frame_with_outlier
+        )
+        pd.testing.assert_frame_equal(default, uniform)
+
+    def test_quantile_binning_handles_repeated_values(self):
+        # duplicate bin edges must be merged instead of raising
+        df = pd.DataFrame({"x": [0.0] * 50 + list(range(50)), "y": list("ab") * 50})
+        result = MutualInformationStrategy(binning="quantile").compute(df)
+        assert result.notna().all().all()
+
+    def test_unknown_binning_raises(self):
+        with pytest.raises(ValueError, match="binning"):
+            MutualInformationStrategy(binning="log")

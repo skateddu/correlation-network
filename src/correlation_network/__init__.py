@@ -2,6 +2,7 @@
 
 from correlation_network._types import (
     AssociationMethod,
+    BinningMethod,
     CentralityMetric,
     LayoutAlgorithm,
 )
@@ -30,6 +31,7 @@ __all__ = [
     "AssociationMethod",
     "AssociationStrategy",
     "AutoAssociationStrategy",
+    "BinningMethod",
     "CentralityAnalyzer",
     "CentralityMetric",
     "CorrelationNetwork",

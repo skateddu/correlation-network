@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `CorrelationNetworkError`, a common base class for every library error;
   each error keeps its previous built-in base (`ValueError`, `AttributeError`)
+- `MutualInformationStrategy(binning="quantile")` for equal-frequency bins,
+  robust to outliers that squeeze equal-width bins (default stays `"uniform"`)
 
 ### Changed
 
