@@ -71,6 +71,9 @@ Initial release.
 - GitHub Actions CI: lint, format, strict mypy, a test matrix over Python
   3.10–3.13 gated at 80% coverage, and a run against the lowest supported
   dependency versions
-- `CONTRIBUTING.md` with development setup, checks and conventions
+- Tag-triggered release workflow publishing to TestPyPI and PyPI through
+  Trusted Publishing
+- `CONTRIBUTING.md` with development setup, checks, conventions and the
+  release procedure
 
 [1.0.0]: https://github.com/skateddu/correlation-network/releases/tag/v1.0.0
