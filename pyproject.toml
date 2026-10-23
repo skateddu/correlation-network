@@ -19,8 +19,6 @@ keywords = [
     "mutual-information",
     "centrality",
 ]
-# The license is declared by the SPDX expression above (PEP 639), which
-# supersedes the "License ::" classifier
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Science/Research",
@@ -34,7 +32,6 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Visualization",
     "Typing :: Typed",
 ]
-# Lower bounds are verified in CI by the "lowest" job (--resolution lowest-direct)
 dependencies = [
     "networkx>=3.0",
     "pandas>=2.0",
@@ -44,7 +41,6 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# 0.12.0 and 0.12.1 publish no wheels for Python 3.10
 phik = ["phik>=0.12.2"]
 polars = [
     "polars>=0.20",
@@ -58,7 +54,6 @@ Issues = "https://github.com/skateddu/correlation-network/issues"
 Changelog = "https://github.com/skateddu/correlation-network/blob/main/CHANGELOG.md"
 
 [build-system]
-# 1.27 is the first release writing PEP 639 license metadata
 requires = ["hatchling>=1.27"]
 build-backend = "hatchling.build"
 
@@ -97,14 +92,10 @@ known-first-party = ["correlation_network"]
 files = ["src"]
 python_version = "3.10"
 strict = true
-# networkx graphs and numpy arrays are used generically throughout, and the
-# scipy/pandas stubs return Any from many numeric calls; flagging either adds
-# annotation noise without catching real errors
 disallow_any_generics = false
 warn_return_any = false
 
 [[tool.mypy.overrides]]
-# phik ships neither inline types nor stubs
 module = ["phik"]
 ignore_missing_imports = true
 
@@ -114,8 +105,6 @@ dev = [
     "pytest-cov>=7.0.0",
     "ruff>=0.15.5",
 ]
-# Kept apart from dev: the stubs pin recent numpy/scipy, which would defeat
-# the CI job that installs the lowest supported versions
 typing = [
     "mypy>=1.18",
     "pandas-stubs>=2.2",
