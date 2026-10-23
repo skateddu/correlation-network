@@ -46,8 +46,8 @@ pip install correlation-network
 With optional extras:
 
 ```bash
-pip install "correlation-network[phik]"     # PhiK correlation support
-pip install "correlation-network[polars]"   # Polars DataFrame support
+pip install "correlation-network[phik]"         # PhiK correlation support
+pip install "correlation-network[polars]"       # Polars DataFrame support
 pip install "correlation-network[phik,polars]"
 ```
 
@@ -148,18 +148,8 @@ print(net.excluded_columns_)  # ['timestamp', 'row_id']
 | `auto` | `AutoAssociationStrategy` | auto-detects types | [0, 1] |
 
 Each method requires columns of the type it operates on. Passing a DataFrame
-that cannot satisfy it raises `InsufficientColumnsError` rather than silently
-returning an empty matrix:
-
-```python
-from correlation_network import InsufficientColumnsError
-
-try:
-    CorrelationNetwork(method="cramers_v").fit(numeric_only_df)
-except InsufficientColumnsError as err:
-    print(err.method, err.required, err.found)
-    # cramers_v  at least 2 categorical columns  []
-```
+that cannot satisfy it raises `InsufficientColumnsError` (attributes `method`,
+`required`, `found`) rather than silently returning an empty matrix.
 
 ### Missing values
 
@@ -168,16 +158,8 @@ present (pairwise-complete observations), the same convention `pandas.corr()`
 uses. Rows missing elsewhere in the DataFrame do not affect an unrelated pair.
 
 If a pair shares no complete rows at all, its association is undefined and
-`NoCompleteObservationsError` is raised rather than a misleading zero:
-
-```python
-from correlation_network import NoCompleteObservationsError
-
-try:
-    CorrelationNetwork(method="auto").fit(df)
-except NoCompleteObservationsError as err:
-    print(err.columns)  # ('cat', 'v')
-```
+`NoCompleteObservationsError` (attribute `columns`) is raised rather than a
+misleading zero.
 
 > **Mutual information and bin count.** `MutualInformationStrategy` discretizes
 > numeric columns into `n_bins` (default 10) before computing MI. With few
@@ -246,8 +228,8 @@ net = CorrelationNetwork(strategy=my_custom_strategy, threshold=0.3)
 ```python
 analyzer = CentralityAnalyzer(graph)
 
-analyzer.degree()       # pd.Series, sorted descending
-analyzer.summary()      # pd.DataFrame with all 5 metrics
+analyzer.degree()   # pd.Series, sorted descending
+analyzer.summary()  # pd.DataFrame with all 5 metrics
 ```
 
 ### Association strength vs. graph distance
@@ -330,33 +312,33 @@ graph LR
 ```
 correlation-network/
 ├── src/correlation_network/
-│   ├── __init__.py              # Public API exports
-│   ├── network.py               # CorrelationNetwork (main entry point)
-│   ├── centrality.py            # CentralityAnalyzer (5 metrics + summary)
-│   ├── visualization.py         # NetworkVisualizer (5 layouts, colormap, community colors)
-│   ├── exceptions.py            # CorrelationNetworkError base + NotFittedError, InsufficientColumnsError, NoCompleteObservationsError
-│   ├── py.typed                 # PEP 561 marker: ships inline type information
-│   ├── _types.py                # Literal type aliases (AssociationMethod, BinningMethod, CentralityMetric, LayoutAlgorithm, CorrelationMethod)
-│   ├── _validation.py           # Fitted guard, missing-data checks, option validation
-│   ├── _graph_utils.py          # Shared graph utilities (abs_weight_graph, distance_graph)
+│   ├── __init__.py           # Public API exports
+│   ├── network.py            # CorrelationNetwork (main entry point)
+│   ├── centrality.py         # CentralityAnalyzer (5 metrics + summary)
+│   ├── visualization.py      # NetworkVisualizer (5 layouts, colormap, community colors)
+│   ├── exceptions.py         # CorrelationNetworkError base + NotFittedError, InsufficientColumnsError, NoCompleteObservationsError
+│   ├── py.typed              # PEP 561 marker: ships inline type information
+│   ├── _types.py             # Literal type aliases (AssociationMethod, BinningMethod, CentralityMetric, LayoutAlgorithm, CorrelationMethod)
+│   ├── _validation.py        # Fitted guard, missing-data checks, option validation
+│   ├── _graph_utils.py       # Shared graph utilities (abs_weight_graph, distance_graph)
 │   └── association/
-│       ├── __init__.py           # Re-exports all strategies
-│       ├── _base.py              # AssociationStrategy (Protocol)
-│       ├── _dtypes.py            # Numeric vs categorical column detection
-│       ├── _correlation.py       # Pearson, Spearman, Kendall
-│       ├── _categorical.py       # Cramer's V, Correlation Ratio (eta)
-│       ├── _universal.py         # PhiK, Mutual Information
-│       └── _auto.py              # Auto-detection + dispatch
+│       ├── __init__.py       # Re-exports all strategies
+│       ├── _base.py          # AssociationStrategy (Protocol)
+│       ├── _dtypes.py        # Numeric vs categorical column detection
+│       ├── _correlation.py   # Pearson, Spearman, Kendall
+│       ├── _categorical.py   # Cramer's V, Correlation Ratio (eta)
+│       ├── _universal.py     # PhiK, Mutual Information
+│       └── _auto.py          # Auto-detection + dispatch
 ├── tests/
-│   ├── conftest.py               # Shared fixtures (numeric, categorical, mixed DataFrames)
-│   ├── unit/                     # One test file per module
-│   └── integration/              # End-to-end pipeline tests
-├── .github/workflows/ci.yml      # Lint, format, mypy, test matrix (3.10–3.13), lowest dependency versions
-├── pyproject.toml                # Metadata, dependencies, ruff, mypy and pytest config
-├── uv.lock                       # Locked dependency versions
-├── CHANGELOG.md                  # Keep a Changelog format
-├── CONTRIBUTING.md               # Development setup and workflow
-└── LICENSE                       # MIT
+│   ├── conftest.py           # Shared fixtures (numeric, categorical, mixed DataFrames)
+│   ├── unit/                 # One test file per module
+│   └── integration/          # End-to-end pipeline tests
+├── .github/workflows/ci.yml  # Lint, format, mypy, test matrix (3.10–3.13), lowest dependency versions
+├── pyproject.toml            # Metadata, dependencies, ruff, mypy and pytest config
+├── uv.lock                   # Locked dependency versions
+├── CHANGELOG.md              # Keep a Changelog format
+├── CONTRIBUTING.md           # Development setup and workflow
+└── LICENSE                   # MIT
 ```
 
 ## References
