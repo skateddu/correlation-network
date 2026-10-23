@@ -71,3 +71,18 @@ If you raise or lower a dependency's minimum, make sure that job still passes.
    `AssociationMethod` literal (`_types.py`) if it should be selectable by name.
 4. Export it from `association/__init__.py` and the package `__init__.py`, and
    document it in the README's *Association Methods* section.
+
+## Releasing
+
+1. In a PR, set `version` in `pyproject.toml`, run `uv lock`, and rename
+   `[Unreleased]` in `CHANGELOG.md` to the new version and date.
+2. After merging, tag the merge commit and push the tag:
+
+   ```bash
+   git tag v1.2.0
+   git push origin v1.2.0
+   ```
+
+The `Publish` workflow checks that the tag matches the package version, builds
+the sdist and wheel, and publishes them to TestPyPI and then PyPI through
+Trusted Publishing.
